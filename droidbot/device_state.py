@@ -242,13 +242,14 @@ class DeviceState(object):
         if view_text is None or len(view_text) > 50:
             view_text = "None"
 
-        signature = "[class]%s[resource_id]%s[text]%s[%s,%s,%s]" % \
+        signature = "[class]%s[resource_id]%s[text]%s[%s,%s,%s,%s]" % \
                     (DeviceState.__safe_dict_get(view_dict, 'class', "None"),
                      DeviceState.__safe_dict_get(view_dict, 'resource_id', "None"),
                      view_text,
                      DeviceState.__key_if_true(view_dict, 'enabled'),
                      DeviceState.__key_if_true(view_dict, 'checked'),
-                     DeviceState.__key_if_true(view_dict, 'selected'))
+                     DeviceState.__key_if_true(view_dict, 'selected'),
+                     DeviceState.__key_if_true(view_dict, 'visible'))
         view_dict['signature'] = signature
         return signature
 
