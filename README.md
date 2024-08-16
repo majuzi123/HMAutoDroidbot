@@ -1,20 +1,20 @@
-## About
-HMDroidBot (HM stands for HarmonyOS) is a lightweight test input generator for HarmonyOS. It forks from [Droidbot](https://github.com/honeynet/droidbot) and supports HarmonyOS NEXT devices.
+## :memo: About
+HMDroidbot (HM stands for HarmonyOS) is a lightweight test input generator for HarmonyOS. It forks from [Droidbot](https://github.com/honeynet/droidbot) and supports HarmonyOS NEXT devices.
 It can send random or scripted input events to an HarmonyOS app, achieve higher test coverage more quickly, and generate a UI transition graph (UTG) after testing.
 
 ## :smiling_face_with_three_hearts: Awesome Features 
-:boom: Surport HarmonyOS report now! Including ability, bundle, etc. Added some HarmonyOS-specific criteria! See the sample report below!
+:boom: Support HarmonyOS report now! Including ability, bundle, *etc.* and some HarmonyOS-specific criteria! See the sample report below!
 
 ![image](https://github.com/user-attachments/assets/1dfbb6f8-c9ab-48b2-8043-5474719a7466)
 
-:boom: Suppport both Android and HarmonyOS devices. Use the flag `-is_harmonyos` to specify the target system.
+:boom: Support both Android and HarmonyOS devices. Use the flag `-is_harmonyos` to specify the target system.
 
 :boom: Source code improvment. Easier to read and debug. Added typing to the source code and colorized the log.
 
 ## Future Develop plan
-:negative_squared_cross_mark: Better layout dump. Currently HMDroidbot uses hdc cmd to dump hierachy. Which is inefficient and has highly hindered the testing effect. In the near future, we will try to make full use of the HarmonyOS sdk and accelerate this progress. Please keep an eye on our project.
+:negative_squared_cross_mark: Better layout dump. Currently HMDroidbot uses hdc cmd to dump hierachy, which is inefficient and has highly hindered the testing effect. In the near future, we will try to make full use of the HarmonyOS sdk to accelerate this progress. Please keep an eye on our project.
 
-:negative_squared_cross_mark: We're doing static analysis among harmonyOS apps. Some harmonyOS-specific criteria like page cov will be added into this project.
+:negative_squared_cross_mark: We're doing static analysis among harmonyOS apps. Some harmonyOS-specific criteria like page-cov will be added into this project.
 
 :negative_squared_cross_mark: HDC cmd is not allowed to reset the text. The sending text action is not implemented and will be supported soon.
 
@@ -51,22 +51,23 @@ If successfully installed, you should be able to execute `droidbot -h`.
     That's it! You will find much useful information, including the UTG, generated in the output dir.
 
     + If you are using multiple devices, you may need to use `-d <device_serial>` to specify the target device. The easiest way to determine a device's serial number is calling `hdc list targets`.
-    + You may find the `-debug` tag useful while you trying to debug the source code.
+    + You may find the `-debug` tag useful while you are trying to debug the source code.
     + You may find other useful features in `droidbot -h`.
 
     **Example Scipt**
     ```bash
     # Start by droidbot cmd
-    droidbot -a PATH_TO_hap_FILE -o output -d 23E**********1843 -count 1000 -is_harmonyos -debug
+    droidbot -a <path_to_hap> -o output -d 23E**********1843 -count 1000 -is_harmonyos -debug
 
     # Start by running module. Easy to debug!
-    python -m droidbot.start -a PATH_TO_.hap -o output -d 23E**********1843 -count 1000 -is_harmonyos -debug
+    # execute the following command in the HMDroidbot dir, which should include the setup.py.
+    python -m droidbot.start -a <path_to_hap> -o output -d 23E**********1843 -count 1000 -is_harmonyos -debug
     ```
 
 ## :mega: Info
-Currently, HMDroidbot is maintained by [ECNU-SE-LAB mobile apps testing group (华东师范大学软件工程实验室 mobile apps 分析与测试小组)](https://mobile-app-analysis.github.io/). We are doing research on ArkTS static anaylsis for WTG(Window transition graph) and it's usage for guided app testing.
+Currently, HMDroidbot is maintained by [ECNU-SE-LAB mobile apps testing group (华东师范大学软件工程实验室 mobile apps 分析与测试小组)](https://mobile-app-analysis.github.io/). We are doing research on ArkTS static anaylsis for WTG(Window transition graph) and its usage for guided app testing.
 
-This project is lead by [Xixian Liang (App Testing)](https://xixianliang.github.io/resume/) and [Mengli Ming (Static Analysis)](https://ml-ming.dev/). We are supervised by prof. [Ting Su](https://tingsu.github.io/). Feel free to contact us if you have any question or advice.
+This project is led by [Xixian Liang (App Testing)](https://xixianliang.github.io/resume/) and [Mengli Ming (Static Analysis)](https://ml-ming.dev/). We are supervised by prof. [Ting Su](https://tingsu.github.io/). Feel free to contact us if you have any question or advice.
 
 ## Acknowledgement
 
