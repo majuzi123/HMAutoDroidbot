@@ -17,6 +17,9 @@ DEFAULT_EVENT_INTERVAL = 1
 DEFAULT_EVENT_COUNT = 100000000
 DEFAULT_TIMEOUT = -1
 
+import typing
+if typing.TYPE_CHECKING:
+    from .input_event import InputEvent
 
 class UnknownInputException(Exception):
     pass
@@ -90,7 +93,7 @@ class InputManager(object):
             input_policy.master = master
         return input_policy
 
-    def add_event(self, event):
+    def add_event(self, event:"InputEvent"):
         """
         add one event to the event list
         :param event: the event to be added, should be subclass of AppEvent

@@ -5,6 +5,9 @@ import subprocess
 import sys
 import time
 from typing import IO
+import typing
+if typing.TYPE_CHECKING:
+    from .input_event import InputEvent
 
 from .device import Device
 from .adapter.hdc import HDC
@@ -13,7 +16,9 @@ from .intent import Intent
 
 DEFAULT_NUM = '1234567890'
 DEFAULT_CONTENT = 'Hello world!'
+# ! If you're on Linux, switch the exectable to hdc
 HDC_EXEC = "hdc.exe"
+# HDC_EXEC = "hdc"
 
 class DeviceHM(Device):
     """
@@ -31,13 +36,6 @@ class DeviceHM(Device):
         """
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        # if device_serial is None:
-        #     from .utils import get_available_devices
-        #     all_devices = get_available_devices()
-        #     if len(all_devices) == 0:
-        #         self.logger.warning("ERROR: No device connected.")
-        #         sys.exit(-1)
-        #     device_serial = all_devices[0]
         if "emulator" in device_serial and not is_emulator:
             self.logger.warning("Seems like you are using an emulator. If so, please add is_emulator option.")
         self.serial = device_serial
@@ -55,11 +53,10 @@ class DeviceHM(Device):
         # basic device information
         self.settings = {}
         self.display_info = None
-        self.model_number = None
+        self._model_number = None
+        self._device_name = None
         self.sdk_version = None
         self.release_version = None
-        self.ro_debuggable = None
-        self.ro_secure = None
         self.connected = True
         self.last_know_state = None
         self.__used_ports = []
@@ -168,7 +165,7 @@ class DeviceHM(Device):
                 continue
             adapter.tear_down()
 
-    def is_foreground(self, app):
+    def is_foreground(self, app) -> bool:
         """
         check if app is in foreground of device
         :param app: App
@@ -186,13 +183,20 @@ class DeviceHM(Device):
             return False
         return top_activity_name.startswith(package_name)
 
-    def get_model_number(self):
+    @property
+    def model_number(self):
         """
         Get model number
         """
-        if self.model_number is None:
-            self.model_number = self.hdc.get_model_number()
-        return self.model_number
+        if self._model_number is None:
+            self._model_number = self.hdc.get_model_number()
+        return self._model_number
+    
+    @property
+    def device_name(self):
+        if self._device_name is None:
+            self._device_name = self.hdc.get_device_name()
+        return self._device_name
 
     def get_sdk_version(self):
         pass
@@ -447,7 +451,7 @@ class DeviceHM(Device):
             cmd = intent
         return self.hdc.shell(cmd)
 
-    def send_event(self, event):
+    def send_event(self, event:"InputEvent"):
         """
         send one event to device
         :param event: the event to be sent
@@ -463,7 +467,7 @@ class DeviceHM(Device):
         """
         if isinstance(app, str):
             package_name = app
-        elif isinstance(app, App):
+        elif isinstance(app, AppHM):
             package_name = app.get_package_name()
             if app.get_main_activity():
                 package_name += "/%s" % app.get_main_activity()
@@ -473,7 +477,7 @@ class DeviceHM(Device):
         intent = Intent(suffix=package_name)
         self.send_intent(intent)
 
-    def get_top_activity_name(self):
+    def get_top_activity_name(self) -> str:
         """
         Get current activity
         """
@@ -800,7 +804,6 @@ class DeviceHM(Device):
         """
         Long touches at (x, y)
         @param duration: duration in ms
-        This workaround was suggested by U{HaMi<http://stackoverflow.com/users/2571957/hami>}
         """
         self.hdc.long_touch(x, y, duration)
 

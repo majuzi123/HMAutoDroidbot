@@ -23,15 +23,19 @@ class HDC(Adapter):
     interface of HDC
     """
     HDC_EXEC = "hdc.exe"
-    # TODO don't know what's this
+    # * HDC command for device info. See the doc below.
+    # * https://github.com/codematrixer/awesome-hdc?tab=readme-ov-file#%E6%9F%A5%E7%9C%8B%E8%AE%BE%E5%A4%87%E4%BF%A1%E6%81%AF
     UP = 0
     DOWN = 1
     DOWN_AND_UP = 2
-    MODEL_PROPERTY = "ro.product.model"
-    VERSION_SDK_PROPERTY = 'ro.build.version.sdk'
-    VERSION_RELEASE_PROPERTY = 'ro.build.version.release'
-    RO_SECURE_PROPERTY = 'ro.secure'
-    RO_DEBUGGABLE_PROPERTY = 'ro.debuggable'
+    MODEL_PROPERTY = "const.product.model"
+    DEVICE_PROPERTY = "const.product.name"
+    VERSION_OS_PROPERTY = "const.product.software.version"
+    CPU_STRUCTER_PROPERTY = "const.product.cpu.abilist"
+    # VERSION_SDK_PROPERTY = ''
+    # VERSION_RELEASE_PROPERTY = ''
+    # RO_SECURE_PROPERTY = ''
+    # RO_DEBUGGABLE_PROPERTY = ''
 
     def __init__(self, device=None):
         """
@@ -82,12 +86,12 @@ class HDC(Adapter):
         # args = [] + self.cmd_prefix    TODO 写到有设备号的时候用这一行
         args += extra_args
 
-        self.logger.debug('command:')
-        self.logger.debug(args)
+        self.logger.debug('Runing command:')
+        self.logger.debug(" ".join([str(arg) for arg in args]))
         r = subprocess.check_output(args).strip()
         if not isinstance(r, str):
             r = r.decode()
-        self.logger.debug('return:')
+        self.logger.debug('Return value:')
         self.logger.debug(r)
         return r
 
@@ -127,7 +131,7 @@ class HDC(Adapter):
         """
         disconnect hdc
         """
-        print("[CONNECTION] %s is disconnected" % self.__class__.__name__)
+        self.logger.info("[CONNECTION] %s is disconnected" % self.__class__.__name__)
 
     def get_property(self, property_name):
         """
@@ -135,7 +139,7 @@ class HDC(Adapter):
         @param property_name:
         @return:
         """
-        return self.shell(["getprop", property_name])
+        return self.shell(["param", "get", property_name])
 
     def get_model_number(self):
         """
@@ -145,29 +149,37 @@ class HDC(Adapter):
 
     def get_sdk_version(self):
         """
-        Get version of SDK, e.g. 18, 20
+        Get version of SDK
         """
+        raise NotImplementedError
         return int(self.get_property(HDC.VERSION_SDK_PROPERTY))
+    
+    def get_device_name(self):
+        """
+        Get the device Name
+        """
+        return self.get_property(HDC.DEVICE_PROPERTY)
 
     def get_release_version(self):
         """
         Get release version, e.g. 4.3, 6.0
         """
+        raise NotImplementedError
         return self.get_property(HDC.VERSION_RELEASE_PROPERTY)
 
-    def get_ro_secure(self):
-        """
-        get ro.secure value
-        @return: 0/1
-        """
-        return int(self.get_property(HDC.RO_SECURE_PROPERTY))
+    # def get_ro_secure(self):
+    #     """
+    #     get ro.secure value
+    #     @return: 0/1
+    #     """
+    #     return int(self.get_property(HDC.RO_SECURE_PROPERTY))
 
-    def get_ro_debuggable(self):
-        """
-        get ro.debuggable value
-        @return: 0/1
-        """
-        return int(self.get_property(HDC.RO_DEBUGGABLE_PROPERTY))
+    # def get_ro_debuggable(self):
+    #     """
+    #     get ro.debuggable value
+    #     @return: 0/1
+    #     """
+    #     return int(self.get_property(HDC.RO_DEBUGGABLE_PROPERTY))
 
     # The following methods are originally from androidviewclient project.
     # https://github.com/dtmilano/AndroidViewClient.
@@ -318,11 +330,13 @@ class HDC(Adapter):
         return x, y
 
     def get_orientation(self):
-        display_info = self.get_display_info()
-        if 'orientation' in display_info:
-            return display_info['orientation']
-        else:
-            return -1
+        """
+        ## ! Function not implemented
+        #### TODO hdc rotate cmd not found 
+        """
+        import inspect
+        self.logger.debug(f"function:get_orientation not implemented. Called by {inspect.stack()[1].function}")
+        return 1
 
     def unlock(self):
         """
@@ -452,7 +466,7 @@ class HDC(Adapter):
         while queue:
             node:dict = queue.popleft()
 
-            # process the node and add some attribute which Droidbot can
+            # process the node and add the hierachy info so that Droidbot can
             # recongnize while traversing
             node["attributes"]["temp_id"] = temp_id
             node["attributes"]["child_count"] = len(node["children"])
@@ -466,6 +480,8 @@ class HDC(Adapter):
                 child["attributes"]["parent"] = temp_id
                 if "bundleName" in node["attributes"]:
                     child["attributes"]["bundleName"] = HDC.__safe_dict_get(node["attributes"], "bundleName")
+                    assert HDC.__safe_dict_get(node["attributes"], "pagePath") is not None, "pagePath not exist"
+                    child["attributes"]["pagePath"] = HDC.__safe_dict_get(node["attributes"], "pagePath")
                 queue.append(child)
             
             temp_id += 1
@@ -511,6 +527,9 @@ class HDC(Adapter):
                 continue
             if key == "type":
                 view["class"] = value
+                continue
+            if key == "key":
+                view["resource_id"] = value
                 continue
             view[key] = value
     

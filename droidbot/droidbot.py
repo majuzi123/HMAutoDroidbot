@@ -17,6 +17,8 @@ from .input_manager import InputManager
 # device and app class for harmonyOS
 from .device_hm import DeviceHM
 from .app_hm import AppHM
+import typing
+import coloredlogs
 
 class DroidBot(object):
     """
@@ -53,10 +55,14 @@ class DroidBot(object):
         initiate droidbot with configurations
         :return:
         """
-        logging.basicConfig(level=logging.DEBUG if debug_mode else logging.INFO)
+        # logging.basicConfig(level=logging.DEBUG if debug_mode else logging.INFO)
+        coloredlogs.install(level=logging.DEBUG if debug_mode else logging.INFO,
+                             fmt='%(asctime)s:%(name)s:%(levelname)s: %(message)s')
 
         self.logger = logging.getLogger('DroidBot')
         DroidBot.instance = self
+
+        self.is_harmonyos = is_harmonyos
 
         self.output_dir = output_dir
         if output_dir is not None:
@@ -69,6 +75,22 @@ class DroidBot(object):
                 shutil.rmtree(target_stylesheets_dir)
             shutil.copy(html_index_path, output_dir)
             shutil.copytree(stylesheets_path, target_stylesheets_dir)
+        
+        # adapt the stylesheet if it's HarmonyOS
+        if self.is_harmonyos:
+            self.logger.info("Adapting report html to HarmonyOS")
+            try:
+                output_html_path = os.path.join(output_dir, "index.html")
+                temp_html_path = os.path.join(output_dir, "temp_index.html")
+                with open(output_html_path, "r+") as f_read, \
+                    open(temp_html_path, "w+") as f_write:
+                    for line in iter(f_read):
+                        line = line.replace(r"stylesheets/droidbotUI.js", r"stylesheets/droidbotUI_hm.js")
+                        f_write.write(line)
+                shutil.move(temp_html_path, output_html_path)
+            except Exception as e:
+                self.logger.error(f"Fail to adapt the html to HarmonyOS. Exeception {e}")
+            
 
         self.timeout = timeout
         self.timer = None
@@ -85,7 +107,6 @@ class DroidBot(object):
         self.ignore_ad = ignore_ad
         self.replay_output = replay_output
 
-        self.is_harmonyos = is_harmonyos
 
         self.enabled = True
 

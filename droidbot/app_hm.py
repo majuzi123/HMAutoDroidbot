@@ -1,11 +1,13 @@
 import logging
 import os
 import hashlib
-from .intent import Intent
 import subprocess, shlex
 import zipfile
 import json
 import shutil
+
+if __name__ != "__main__":
+    from .intent import Intent
 
 def run_cmd(cmd):
     return subprocess.run(shlex.split(cmd), shell=True, check=True).stdout
@@ -32,17 +34,14 @@ class AppHM(object):
                 os.makedirs(output_dir)
 
         self.parse_hap()
-
-        # from androguard.core.bytecodes.apk import APK
-        # self.apk = APK(self.app_path)
-        # self.package_name = self.apk.get_package()
-        # self.app_name = self.apk.get_app_name()
-        # self.main_activity = self.apk.get_main_activity()
-        # self.permissions = self.apk.get_permissions()
-        # self.activities = self.apk.get_activities()
-        # self.possible_broadcasts = self.get_possible_broadcasts()
-        # self.dumpsys_main_activity = None
-        # self.hashes = self.get_hashes()
+    
+    def __str__(self) -> str:
+        app_info = ", ".join([
+            f"bundleName:{self.package_name}",
+            f"total_abilities:{self.total_activities}",
+            f"main_ability:{self.main_activity}",
+        ])
+        return f"App({app_info})"
 
     def parse_hap(self):
         self.logger.info(f"Extracting info from {self.app_path}")
@@ -68,12 +67,11 @@ class AppHM(object):
 
     def read_hap_info(self, module_json, pack_info):
         self.package_name = pack_info["summary"]["app"]["bundleName"]
-        # self.app_name = self.apk.get_app_name()
+        self.api_version = pack_info["summary"]["modules"][0]["apiVersion"]["target"]
         self.main_activity = pack_info["summary"]["modules"][0]["mainAbility"]
-        # self.permissions = self.apk.get_permissions()
-        self.activities = pack_info["summary"]["modules"]
+        self.activities = pack_info["summary"]["modules"][0]["abilities"]
+        self.total_activities = len(self.activities)
         # self.possible_broadcasts = self.get_possible_broadcasts()
-        # self.dumpsys_main_activity = None
         self.hashes = self.get_hashes()
 
     def get_package_name(self):
@@ -156,3 +154,15 @@ class AppHM(object):
             sha1.update(data)
             sha256.update(data)
         return [md5.hexdigest(), sha1.hexdigest(), sha256.hexdigest()]
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="agr parser for Extrating info from hap")
+    parser.add_argument("-a", "--app", type=str, help="the address to the .hap file", required=True)
+    args = parser.parse_args()
+    app = AppHM(args.app)
+    # * uncomment the below block to save the ablity info to file
+    # with open(app.package_name+".info.json", "w") as fp:
+    #     import json
+    #     json.dump(app.activities, fp, indent=4, sort_keys=True)
+    print(app)

@@ -2,7 +2,7 @@ import copy
 import math
 import os
 
-from .utils import md5
+from .utils import md5, deprecated
 from .input_event import TouchEvent, LongTouchEvent, ScrollEvent, SetTextEvent, KeyEvent
 
 
@@ -33,6 +33,7 @@ class DeviceState(object):
         self.possible_events = None
         self.width = device.get_width(refresh=True)
         self.height = device.get_height(refresh=False)
+        self.pagePath = self.__get_pagePath()
 
     @property
     def activity_short_name(self):
@@ -99,6 +100,14 @@ class DeviceState(object):
         view_dict['depth'] = depth
         for view_id in DeviceState.__safe_dict_get(view_dict, 'children', []):
             DeviceState.__assign_depth(views, views[view_id], depth + 1)
+
+    def __get_pagePath(self):
+        for view in self.views:
+            pagePath = self.__safe_dict_get(view, "pagePath")
+            if pagePath:
+                return pagePath
+
+
 
     def __get_state_str(self):
         state_str_raw = self.__get_state_str_raw()
@@ -193,6 +202,29 @@ class DeviceState(object):
             # from PIL.Image import Image
             # if isinstance(self.screenshot_path, Image):
             #     self.screenshot_path.save(dest_screenshot_path)
+        except Exception as e:
+            self.device.logger.warning(e)
+
+    
+    @deprecated(reason="A temporary function for research")
+    def save_newPage(self, newPageName):
+        """
+        ## output page hierachy for Mengli Ming.
+        """
+        try:
+            output_dir = os.path.join(self.device.output_dir, "states", "newPages")
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+            newPageName = newPageName.replace("/", "-")
+            dest_state_json_path = "%s/state_%s.json" % (output_dir, newPageName)
+            dest_screenshot_path = "%s/screen_%s.jpeg" % (output_dir, newPageName)
+            state_json_file = open(dest_state_json_path, "w")
+            state_json_file.write(self.to_json())
+            state_json_file.close()
+            import shutil
+            shutil.copyfile(self.screenshot_path, dest_screenshot_path)
+            self.screenshot_path = dest_screenshot_path
+
         except Exception as e:
             self.device.logger.warning(e)
 
@@ -480,7 +512,6 @@ class DeviceState(object):
         return [] + possible_events
 
     def get_text_representation(self, merge_buttons=False):
-        # TODO edit this func to adapt HDC
         """
         Get a text representation of current state
         """

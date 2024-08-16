@@ -3,9 +3,16 @@ import os
 import random
 import time
 from abc import abstractmethod
-
+import logging
 from . import utils
 from .intent import Intent
+import typing
+if typing.TYPE_CHECKING:
+    from .device_hm import DeviceHM
+    from .device import Device
+    from .device_state import DeviceState
+    from .app import App
+    from .app_hm import AppHM
 
 POSSIBLE_KEYS = [
     "BACK",
@@ -95,6 +102,7 @@ class InputEvent(object):
     def __init__(self):
         self.event_type = None
         self.log_lines = None
+        
 
     def to_dict(self):
         return self.__dict__
@@ -165,7 +173,7 @@ class EventLog(object):
     save an event to local file system
     """
 
-    def __init__(self, device, app, event, profiling_method=None, tag=None):
+    def __init__(self, device:typing.Union["Device", "DeviceHM"], app:typing.Union["App", "AppHM"], event:"InputEvent", profiling_method=None, tag=None):
         self.device = device
         self.app = app
         self.event = event
@@ -183,6 +191,8 @@ class EventLog(object):
         self.is_profiling = False
         self.profiling_pid = -1
         self.sampling = None
+
+        self.logger = logging.getLogger(self.__class__.__name__)
 
         # sampling feature was added in Android 5.0 (API level 21)
         if not self.device.is_harmonyos:
@@ -271,6 +281,7 @@ class EventLog(object):
         self.stop_profiling()
         self.to_state = self.device.get_current_state()
         self.save2dir()
+
         self.save_views()
 
     def stop_profiling(self, output_dir=None):
@@ -369,10 +380,10 @@ class KillAppEvent(InputEvent):
     def get_random_instance(device, app):
         return None
 
-    def send(self, device):
+    def send(self, device:typing.Union["Device", "DeviceHM"]):
         if self.stop_intent:
             device.send_intent(self.stop_intent)
-        device.key_press('HOME')
+        device.key_press('Home' if device.is_harmonyos else "HOME")
 
     def get_event_str(self, state):
         return "%s()" % self.__class__.__name__
@@ -469,9 +480,10 @@ class TouchEvent(UIEvent):
         y = random.uniform(0, device.get_height())
         return TouchEvent(x, y)
 
-    def send(self, device):
+    def send(self, device:typing.Union["DeviceHM", "Device"]):
         x, y = UIEvent.get_xy(x=self.x, y=self.y, view=self.view)
-        device.view_long_touch(x=x, y=y, duration=200)
+        # device.view_long_touch(x=x, y=y, duration=200)
+        device.view_touch(x=x, y=y)
         return True
 
     def get_event_str(self, state):

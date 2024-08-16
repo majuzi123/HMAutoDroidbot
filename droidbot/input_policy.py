@@ -7,6 +7,14 @@ from abc import abstractmethod
 from .input_event import InputEvent, KeyEvent, IntentEvent, TouchEvent, ManualEvent, SetTextEvent, KillAppEvent
 from .utg import UTG
 
+import typing
+if typing.TYPE_CHECKING:
+    from .input_manager import InputManager
+    from .device import Device
+    from .device_hm import DeviceHM
+    from .app import App
+    from .app_hm import AppHM
+
 # Max number of restarts
 MAX_NUM_RESTARTS = 5
 # Max number of steps outside the app
@@ -46,14 +54,14 @@ class InputPolicy(object):
     It should call AppEventManager.send_event method continuously
     """
 
-    def __init__(self, device, app):
+    def __init__(self, device:typing.Union["Device", "DeviceHM"], app:typing.Union["App","AppHM"]):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.device = device
         self.app = app
         self.action_count = 0
         self.master = None
 
-    def start(self, input_manager):
+    def start(self, input_manager:"InputManager"):
         """
         start producing events
         :param input_manager: instance of InputManager
@@ -137,6 +145,7 @@ class UtgBasedInputPolicy(InputPolicy):
         generate an event
         @return:
         """
+        self.utg.num_input_events += 1
 
         # Get current device state
         self.current_state = self.device.get_current_state()

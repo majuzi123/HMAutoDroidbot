@@ -50,8 +50,6 @@ class DroidBotConn(Adapter):
         initiate a DroidBot connection
         :return:
         """
-        logging.basicConfig(level=logging.INFO)
-        self.logger = logging.getLogger('DroidBot')
 
         self.device_unique_id = device_unique_id
 
@@ -77,6 +75,12 @@ class DroidBotConn(Adapter):
         self.humanoid = humanoid
         self.ignore_ad = ignore_ad
         self.replay_output = replay_output
+        
+        if self.debug_mode:
+            logging.basicConfig(level=logging.DEBUG)
+        else:
+            logging.basicConfig(level=logging.INFO)
+        self.logger = logging.getLogger('DroidBot')
 
         self.connected = False
         self.droidbot_p = False
