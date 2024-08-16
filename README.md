@@ -66,7 +66,7 @@ If successfully installed, you should be able to execute `droidbot -h`.
 ## :mega: Info
 Currently, HMDroidbot is maintained by [ECNU-SE-LAB mobile apps testing group (华东师范大学软件工程实验室 mobile apps 分析与测试小组)](https://mobile-app-analysis.github.io/). We are doing research on ArkTS static anaylsis for WTG(Window transition graph) and it's usage for guided app testing.
 
-This project is lead by [Xixian Liang (App Testing)](https://xixianliang.github.io/resume/) and [Mengli Ming (Static Analysis)](https://ml-ming.dev/). We are supervised by [prof. Tiug Su](https://tingsu.github.io/). Feel free to contact us if you have any question or advice.
+This project is lead by [Xixian Liang (App Testing)](https://xixianliang.github.io/resume/) and [Mengli Ming (Static Analysis)](https://ml-ming.dev/). We are supervised by prof. [Ting Su](https://tingsu.github.io/). Feel free to contact us if you have any question or advice.
 
 ## Acknowledgement
 
