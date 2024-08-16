@@ -7,6 +7,9 @@ It can send random or scripted input events to an HarmonyOS app, achieve higher 
 
 ![image](https://github.com/user-attachments/assets/b8359efc-6d1b-4dff-95d4-551744e25131)
 
+:boom: suppport both Android and HarmonyOS devices. Use the flag `-is_harmonyos` to specify the target system.
+
+:boom: Source code improvment. Easier to read and debug. Added typing to the source code and colorized the logging.
 
 ## Future Develop plan
 :negative_squared_cross_mark: Better layout dump. Currently HMDroidbot uses hdc cmd to dump hierachy. Which is inefficient and has highly hindered the testing effect. In the near future, we will try to make full use of the HarmonyOS sdk and accelerate this progress. Please keep an eye on our project.
@@ -17,7 +20,7 @@ It can send random or scripted input events to an HarmonyOS app, achieve higher 
 
 ## Prerequisite
 
-1. `Python3.10+`
+1. `Python 3.10+`
 2. `HDC cmdtool`
 
 ## How to install
@@ -34,12 +37,13 @@ If successfully installed, you should be able to execute `droidbot -h`.
 
 ## How to use
 
-1. Make sure you have:
+1. **Make sure you have:**
 
     + `.hap` file path of the app you want to analyze.
     + A device or an emulator connected to your host machine via `hdc`.
 
-2. Start HMDroidBot:
+2. **Start HMDroidBot:**
+    
     Basic command
     ```bash
     droidbot -a <path_to_hap> -o output_dir -is_harmonyos
@@ -47,10 +51,10 @@ If successfully installed, you should be able to execute `droidbot -h`.
     That's it! You will find much useful information, including the UTG, generated in the output dir.
 
     + If you are using multiple devices, you may need to use `-d <device_serial>` to specify the target device. The easiest way to determine a device's serial number is calling `hdc list targets`.
+    + You may find the `-debug` tag useful while you trying to debug the source code.
     + You may find other useful features in `droidbot -h`.
-    + You may figure the `-debug` tag useful.
 
-    Example Scipt
+    **Example Scipt**
     ```bash
     # Start by droidbot cmd
     droidbot -a PATH_TO_hap_FILE -o output -d 23E**********1843 -count 1000 -is_harmonyos -debug
@@ -66,6 +70,6 @@ This project is lead by [Xixian Liang (App Testing)](https://xixianliang.github.
 
 ## Acknowledgement
 
-1. [Droidbot](https://github.com/honeynet/droidbot)
-2. [awesome-hdc](https://github.com/codematrixer/awesome-hdc)
-3. The development of this project receives generous help and advice from the HUAWEI engineers.
+- [Droidbot](https://github.com/honeynet/droidbot)
+- [awesome-hdc](https://github.com/codematrixer/awesome-hdc)
+- The development of this project receives generous help and advice from the HUAWEI engineers.
