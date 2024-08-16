@@ -102,7 +102,7 @@ function getOverallResult() {
   overallInfo += "<tr><th class=\"col-md-1\"># UTG edges</th><td class=\"col-md-4\">" + utg.num_edges + "</td></tr>\n";
   overallInfo += "<tr><th class=\"col-md-1\"># Reached pages</th><td class=\"col-md-4\">" + utg.num_reached_pages + "</td></tr>\n";
   activity_coverage = 100 * utg.num_reached_abilities / utg.app_num_total_abilities;
-  overallInfo += "<tr><th class=\"col-md-1\">Activity_coverage</th><td class=\"col-md-4 progress\"><div class=\"progress-bar\" role=\"progressbar\" aria-valuenow=\"" + utg.num_reached_abilities + "\" aria-valuemin=\"0\" aria-valuemax=\"" + utg.app_num_total_abilities + "\" style=\"width: " + activity_coverage + "%;\">" + utg.num_reached_abilities + "/" + utg.app_num_total_abilities + "</div></td></tr>\n";
+  overallInfo += "<tr><th class=\"col-md-1\">Ability_coverage</th><td class=\"col-md-4 progress\"><div class=\"progress-bar\" role=\"progressbar\" aria-valuenow=\"" + utg.num_reached_abilities + "\" aria-valuemin=\"0\" aria-valuemax=\"" + utg.app_num_total_abilities + "\" style=\"width: " + activity_coverage + "%;\">" + utg.num_reached_abilities + "/" + utg.app_num_total_abilities + "</div></td></tr>\n";
 
   overallInfo += "</table>";
   return overallInfo;
