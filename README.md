@@ -3,13 +3,13 @@ HMDroidBot (HM stands for HarmonyOS) is a lightweight test input generator for H
 It can send random or scripted input events to an HarmonyOS app, achieve higher test coverage more quickly, and generate a UI transition graph (UTG) after testing.
 
 ## :smiling_face_with_three_hearts: Awesome Features 
-:boom: Surport HarmonyOS report now! Including ability, bundle, etc.. And the HarmonyOS-specific analysis criteria page! See the sample report below!
+:boom: Surport HarmonyOS report now! Including ability, bundle, etc. Added some HarmonyOS-specific criteria! See the sample report below!
 
-![image](https://github.com/user-attachments/assets/b8359efc-6d1b-4dff-95d4-551744e25131)
+![image](https://github.com/user-attachments/assets/1dfbb6f8-c9ab-48b2-8043-5474719a7466)
 
-:boom: Support both Android and HarmonyOS devices. Use the flag `-is_harmonyos` to specify the target system.
+:boom: Suppport both Android and HarmonyOS devices. Use the flag `-is_harmonyos` to specify the target system.
 
-:boom: Source code improvment. Easier to read and debug. Added typing to the source code and colorized the logging.
+:boom: Source code improvment. Easier to read and debug. Added typing to the source code and colorized the log.
 
 ## Future Develop plan
 :negative_squared_cross_mark: Better layout dump. Currently HMDroidbot uses hdc cmd to dump hierachy. Which is inefficient and has highly hindered the testing effect. In the near future, we will try to make full use of the HarmonyOS sdk and accelerate this progress. Please keep an eye on our project.
@@ -21,7 +21,7 @@ It can send random or scripted input events to an HarmonyOS app, achieve higher 
 ## Prerequisite
 
 1. `Python 3.10+`
-2. `HDC cmdtool`
+2. `HDC cmdtool 3.1.0a+`
 
 ## How to install
 
