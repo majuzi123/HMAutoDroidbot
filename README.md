@@ -86,3 +86,7 @@ This project is led by [Xixian Liang](https://xixianliang.github.io/resume/) and
 - [Droidbot](https://github.com/honeynet/droidbot)
 - [awesome-hdc](https://github.com/codematrixer/awesome-hdc)
 - The development of this project receives generous help and advice from the HUAWEI engineers.
+
+## License
+
+This project is based on the original MIT License (see `LICENSE` file) and includes my contributions, which are governed by [Xixian Liang](https://github.com/XixianLiang) (see `LICENSE_NEW` file).
