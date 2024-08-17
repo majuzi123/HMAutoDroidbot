@@ -42,7 +42,17 @@ If successfully installed, you should be able to execute `droidbot -h`.
 1. **Make sure you have:**
 
     + `.hap` file path of the app you want to analyze.
+
+    We provided some sample hap for testing [here](https://github.com/XixianLiang/HarmonyOS_NEXT_apps).
+
     + A device or an emulator connected to your host machine via `hdc`.
+
+2. **Quick Start**
+
+    :wave: Simply run the `run_sample.sh` file we provided to download the sample hap and try HMDroidbot!
+    ```bash
+    bash run_sample.sh
+    ```
 
 2. **Start HMDroidBot:**
     
@@ -52,21 +62,13 @@ If successfully installed, you should be able to execute `droidbot -h`.
     ```
     > Attention! -a is used to specify the path to hap, please use absolute path here!
     That's it! You will find much useful information, including the UTG, generated in the output dir.
-    
-    We provided some sample hap for testing [here](https://github.com/XixianLiang/HarmonyOS_NEXT_apps).
-
-    :wave: Simply run the `run_sample.sh` file we provided to download the sample hap and try HMDroidbot!
-    ```bash
-    bash run_sample.sh
-    ```
-
 
     + If you are using multiple devices, you may need to use `-d <device_serial>` to specify the target device. The easiest way to determine a device's serial number is calling `hdc list targets`.
     + You may find the `-debug` tag useful while you are trying to debug the source code.
     + Use `-log` flag to get the hilog in HarmonyOS, which can be found in the report directory.
     + You may find other useful features in `droidbot -h`.
 
-    **Example Scipt**
+    **Example Starting Scripts**
     ```bash
     # Start by droidbot cmd
     droidbot -a <absolute_path_to_hap> -o output -d 23E**********1843 -count 1000 -is_harmonyos -debug
@@ -74,6 +76,7 @@ If successfully installed, you should be able to execute `droidbot -h`.
     # Start by running module. Easy to debug!
     # execute the following command in the HMDroidbot dir, which should include the setup.py.
     python -m droidbot.start -a <absolute_path_to_hap> -o output -d 23E**********1843 -count 1000 -is_harmonyos -debug
+    ```
     
 ## Trouble shooting
 Switch the `HDC_EXEC` variable from `hdc.exe` to `hdc` if you're using hdc tools for linux.
