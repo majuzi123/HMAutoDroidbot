@@ -6,7 +6,9 @@ from droidbot import input_policy
 from droidbot import env_manager
 from droidbot import DroidBot
 from droidbot.droidmaster import DroidMaster
+import logging
 
+logger = logging.getLogger(__name__)
 
 def parse_args():
     """
@@ -107,7 +109,7 @@ def main():
     opts = parse_args()
     import os
     if not os.path.exists(opts.apk_path):
-        print("APK does not exist.")
+        logger.error("App does not exist.")
         return
     if not opts.output_dir and opts.cv_mode:
         print("To run in CV mode, you need to specify an output dir (using -o option).")

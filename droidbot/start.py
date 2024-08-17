@@ -6,7 +6,8 @@ from . import input_policy
 from . import env_manager
 from .droidbot import DroidBot
 from .droidmaster import DroidMaster
-
+import logging
+logger = logging.getLogger(__name__)
 
 def parse_args():
     """
@@ -15,8 +16,8 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description="Start DroidBot to test an Android app.",
                                      formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("-d", action="store", dest="device_serial", required=False,
-                        help="The serial number of target device (use `adb devices` to find)")
+    parser.add_argument("-d","-t", action="store", dest="device_serial", required=False,
+                        help="The serial number of target device (use `adb devices` to find Android device and `hdc list targets` to find HarmonyOS device)")
     parser.add_argument("-a", action="store", dest="apk_path", required=True,
                         help="The file path to target APK")
     parser.add_argument("-o", action="store", dest="output_dir",
@@ -89,6 +90,8 @@ def parse_args():
                         help="Ignore Ad views by checking resource_id.")
     parser.add_argument("-replay_output", action="store", dest="replay_output",
                         help="The droidbot output directory being replayed.")
+    parser.add_argument("-log", action="store_true", dest="save_log",
+                        help="Save the device log while testing. Can be found in the report directory (Logcat in Android and Hilog in HarmonyOS")
     parser.add_argument("-is_harmonyos", action="store_true", dest="is_harmonyos",
                         help="Runing droidbot on harmonyOS")
     options = parser.parse_args()
@@ -104,10 +107,10 @@ def main():
     opts = parse_args()
     import os
     if not os.path.exists(opts.apk_path):
-        print("APK does not exist.")
+        logger.error("App does not exist.")
         return
     if not opts.output_dir and opts.cv_mode:
-        print("To run in CV mode, you need to specify an output dir (using -o option).")
+        logger.error("To run in CV mode, you need to specify an output dir (using -o option).")
 
     if opts.distributed:
         if opts.distributed == "master":
@@ -168,7 +171,8 @@ def main():
             humanoid=opts.humanoid,
             ignore_ad=opts.ignore_ad,
             replay_output=opts.replay_output,
-            is_harmonyos=opts.is_harmonyos)
+            is_harmonyos=opts.is_harmonyos,
+            save_log=opts.save_log)
         droidbot.start()
     return
 

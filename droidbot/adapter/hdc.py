@@ -11,6 +11,11 @@ try:
 except ImportError:
     from pipes import quote # Python 2
 
+# ! if you're on unix, swtich the hdc executable to hdc
+HDC_EXEC = "hdc.exe"
+# HDC_EXEC = "hdc"
+
+
 class HDCException(Exception):
     """
     Exception in HDC connection
@@ -22,7 +27,7 @@ class HDC(Adapter):
     """
     interface of HDC
     """
-    HDC_EXEC = "hdc.exe"
+    global HDC_EXEC
     # * HDC command for device info. See the doc below.
     # * https://github.com/codematrixer/awesome-hdc?tab=readme-ov-file#%E6%9F%A5%E7%9C%8B%E8%AE%BE%E5%A4%87%E4%BF%A1%E6%81%AF
     UP = 0
@@ -50,10 +55,11 @@ class HDC(Adapter):
             device = Device()
         self.device = device
 
-        self.cmd_prefix = [self.HDC_EXEC, "-t", device.serial]
+        self.cmd_prefix = [HDC_EXEC, "-t", device.serial]
 
     
     def set_up(self):
+        self.logger.info(f"[CONNECTION] Setting up Adapter hdc.")
         # make the temp path in output dir to store the dumped layout result
         temp_path = os.getcwd() + "/" + self.device.output_dir + "/temp"
         if os.path.exists(temp_path):

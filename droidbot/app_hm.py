@@ -25,7 +25,7 @@ class AppHM(object):
         """
         # assert app_path is not None
         self.logger = logging.getLogger(self.__class__.__name__)
-
+        
         self.app_path = app_path
 
         self.output_dir = output_dir
@@ -45,9 +45,10 @@ class AppHM(object):
 
     def parse_hap(self):
         self.logger.info(f"Extracting info from {self.app_path}")
-        self.logger.info(f"Hapfile is {self.app_path.split('/')[-1]}")
+        self.logger.info(f"Hapfile is {os.path.basename(self.app_path)}")
         # make temp dir
-        temp_dir = "/".join(self.app_path.split("/")[:-1]) + "/temp_hap"
+        temp_dir = os.path.join(os.path.dirname(self.app_path), "temp_hap")
+        # temp_dir = "/".join(self.app_path.split("/")[:-1]) + "/temp_hap"
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
         os.mkdir(temp_dir)

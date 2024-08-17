@@ -50,7 +50,8 @@ class DroidBot(object):
                  humanoid=None,
                  ignore_ad=False,
                  replay_output=None,
-                 is_harmonyos=False):
+                 is_harmonyos=False,
+                 save_log=False):
         """
         initiate droidbot with configurations
         :return:
@@ -63,6 +64,7 @@ class DroidBot(object):
         DroidBot.instance = self
 
         self.is_harmonyos = is_harmonyos
+        self.save_log = save_log
 
         self.output_dir = output_dir
         if output_dir is not None:
@@ -122,7 +124,8 @@ class DroidBot(object):
                     enable_accessibility_hard=self.enable_accessibility_hard,
                     humanoid=self.humanoid,
                     ignore_ad=ignore_ad,
-                    is_harmonyos=self.is_harmonyos)
+                    is_harmonyos=self.is_harmonyos,
+                    save_log=self.save_log)
                 self.app = App(app_path, output_dir=self.output_dir)
 
                 self.env_manager = AppEnvManager(
@@ -151,7 +154,8 @@ class DroidBot(object):
                     enable_accessibility_hard=self.enable_accessibility_hard,
                     humanoid=self.humanoid,
                     ignore_ad=ignore_ad,
-                    is_harmonyos=self.is_harmonyos)
+                    is_harmonyos=self.is_harmonyos,
+                    save_log=self.save_log)
                 self.app = AppHM(app_path, output_dir=self.output_dir)
 
                 self.env_manager = AppEnvManager(

@@ -28,7 +28,7 @@ class Device(object):
 
     def __init__(self, device_serial=None, is_emulator=False, output_dir=None,
                  cv_mode=False, grant_perm=False, telnet_auth_token=None,
-                 enable_accessibility_hard=False, humanoid=None, ignore_ad=False, is_harmonyos=False):
+                 enable_accessibility_hard=False, humanoid=None, ignore_ad=False, is_harmonyos=False, save_log=False):
         """
         initialize a device connection
         :param device_serial: serial number of target device
@@ -82,13 +82,14 @@ class Device(object):
         self.droidbot_ime = DroidBotIme(device=self)
         self.hdc = HDC(device=self)
         self.is_harmonyos = is_harmonyos
+        self.save_log = save_log
     
         self.adapters = {
             self.adb: True,
             self.telnet: False,
             self.droidbot_app: True,
             self.minicap: True,
-            self.logcat: True,
+            self.logcat: True if self.save_log else False,
             self.user_input_monitor: True,
             self.process_monitor: True,
             self.droidbot_ime: True

@@ -9,7 +9,9 @@ It can send random or scripted input events to an HarmonyOS app, achieve higher 
 
 :boom: Support both Android and HarmonyOS devices. Use the flag `-is_harmonyos` to specify the target system.
 
-:boom: Source code improvment. Easier to read and debug. Added typing to the source code and colorized the log.
+:boom: Source code improvment. Easier to read and debug. Added typing to the source code and colorized the log. Use `-debug` flag to print the debug level log to the terminal!
+
+:boom: Use `-log` flag to get the hilog from the device. Check it in the report directory!
 
 ## Future Develop plan
 :negative_squared_cross_mark: Better layout dump. Currently HMDroidbot uses hdc cmd to dump hierachy, which is inefficient and has highly hindered the testing effect. In the near future, we will try to make full use of the HarmonyOS sdk to accelerate this progress. Please keep an eye on our project.
@@ -46,23 +48,37 @@ If successfully installed, you should be able to execute `droidbot -h`.
     
     Basic command
     ```bash
-    droidbot -a <path_to_hap> -o output_dir -is_harmonyos
+    droidbot -a <absolute_path_to_hap> -o output_dir -is_harmonyos
     ```
+    > Attention! -a is used to specify the path to hap, please use absolute path here!
     That's it! You will find much useful information, including the UTG, generated in the output dir.
+    
+    We provided some sample hap for testing [here](https://github.com/XixianLiang/HarmonyOS_NEXT_apps).
+
+    :wave: Simply run the `run_sample.sh` file we provided to download the sample hap and try HMDroidbot!
+    ```bash
+    bash run_sample.sh
+    ```
+
 
     + If you are using multiple devices, you may need to use `-d <device_serial>` to specify the target device. The easiest way to determine a device's serial number is calling `hdc list targets`.
     + You may find the `-debug` tag useful while you are trying to debug the source code.
+    + Use `-log` flag to get the hilog in HarmonyOS, which can be found in the report directory.
     + You may find other useful features in `droidbot -h`.
 
     **Example Scipt**
     ```bash
     # Start by droidbot cmd
-    droidbot -a <path_to_hap> -o output -d 23E**********1843 -count 1000 -is_harmonyos -debug
+    droidbot -a <absolute_path_to_hap> -o output -d 23E**********1843 -count 1000 -is_harmonyos -debug
 
     # Start by running module. Easy to debug!
     # execute the following command in the HMDroidbot dir, which should include the setup.py.
-    python -m droidbot.start -a <path_to_hap> -o output -d 23E**********1843 -count 1000 -is_harmonyos -debug
-    ```
+    python -m droidbot.start -a <absolute_path_to_hap> -o output -d 23E**********1843 -count 1000 -is_harmonyos -debug
+    
+## Trouble shooting
+Switch the `HDC_EXEC` variable from `hdc.exe` to `hdc` if you're using hdc tools for linux.
+
+We used WSL to develop this project. so the hdc tool we used in this project is actually `hdc.exe` by adding `/mnt/.../hdc.exe` on windows to the WSL PATH.
 
 ## :mega: Info
 Currently, HMDroidbot is maintained by [ECNU-SE-LAB mobile apps testing group (华东师范大学软件工程实验室 mobile apps 分析与测试小组)](https://mobile-app-analysis.github.io/). We are doing research on ArkTS static anaylsis for WTG(Window transition graph) and its usage for guided app testing.

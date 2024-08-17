@@ -10,15 +10,14 @@ if typing.TYPE_CHECKING:
     from .input_event import InputEvent
 
 from .device import Device
-from .adapter.hdc import HDC
+from .adapter.hdc import HDC, HDC_EXEC
 from .app_hm import AppHM
+from .adapter.hilog import Hilog
 from .intent import Intent
 
 DEFAULT_NUM = '1234567890'
 DEFAULT_CONTENT = 'Hello world!'
-# ! If you're on Linux, switch the exectable to hdc
-HDC_EXEC = "hdc.exe"
-# HDC_EXEC = "hdc"
+
 
 class DeviceHM(Device):
     """
@@ -27,7 +26,7 @@ class DeviceHM(Device):
 
     def __init__(self, device_serial=None, is_emulator=False, output_dir=None,
                  cv_mode=False, grant_perm=False, telnet_auth_token=None,
-                 enable_accessibility_hard=False, humanoid=None, ignore_ad=False, is_harmonyos=True):
+                 enable_accessibility_hard=False, humanoid=None, ignore_ad=False, is_harmonyos=True, save_log=False):
         """
         initialize a device connection
         :param device_serial: serial number of target device
@@ -63,14 +62,16 @@ class DeviceHM(Device):
         self.pause_sending_event = False
 
         self.is_harmonyos = is_harmonyos
+        self.save_log = save_log
 
         # adapters
         self.hdc = HDC(device=self)
-
+        self.hilog = Hilog(device=self)
 
         self.logger.info("You're runing droidbot on HarmonyOS")
         self.adapters = {
-            self.hdc: True
+            self.hdc: True,
+            self.hilog: True if self.save_log else False
         }
 
     def check_connectivity(self):
