@@ -9,16 +9,9 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
 
 :boom: Support both Android and HarmonyOS devices. Use the flag `-is_harmonyos` to specify the target system.
 
-:boom: Source code improvment. Easier to read and debug. Added typing to the source code and colorized the log. Use `-debug` flag to print the debug level log to the terminal!
+:boom: Source code improvement. Easier to read and debug. Added typing to the source code and colorized the log. Use `-debug` flag to print the debug level log to the terminal!
 
 :boom: Use `-log` flag to get the hilog from the device. Check it in the report directory!
-
-## Future Develop plan
-:negative_squared_cross_mark: Better layout dump. Currently HMDroidbot uses hdc cmd to dump hierachy, which is inefficient and has highly hindered the testing effect. In the near future, we will try to make full use of the HarmonyOS sdk to accelerate this progress. Please keep an eye on our project.
-
-:negative_squared_cross_mark: We're doing static analysis among harmonyOS apps. Some harmonyOS-specific criteria like page-cov will be added into this project.
-
-:negative_squared_cross_mark: HDC cmd is not allowed to reset the text. The sending text action is not implemented and will be supported soon.
 
 ## Prerequisite
 
@@ -54,7 +47,7 @@ If successfully installed, you should be able to execute `droidbot -h`.
     bash run_sample.sh
     ```
 
-2. **Start HMDroidBot:**
+2. **Start HMDroidbot:**
     
     Basic command
     ```bash
