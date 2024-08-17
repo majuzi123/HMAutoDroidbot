@@ -84,9 +84,9 @@ Switch the `HDC_EXEC` variable from `hdc.exe` to `hdc` if you're using hdc tools
 We used WSL to develop this project. so the hdc tool we used in this project is actually `hdc.exe` by adding `/mnt/.../hdc.exe` on windows to the WSL PATH.
 
 ## :mega: Info
-Currently, HMDroidbot is maintained by [ECNU-SE-LAB mobile apps testing group (华东师范大学软件工程实验室 mobile apps 分析与测试小组)](https://mobile-app-analysis.github.io/). We are doing research on ArkTS static anaylsis for WTG(Window transition graph) and its usage for guided app testing.
+Currently, HMDroidbot is maintained by [华东师范大学-移动软件分析与测试小组)](https://mobile-app-analysis.github.io/). 
 
-This project is led by [Xixian Liang (App Testing)](https://xixianliang.github.io/resume/) and [Mengli Ming (Static Analysis)](https://ml-ming.dev/). We are supervised by prof. [Ting Su](https://tingsu.github.io/). Feel free to contact us if you have any question or advice.
+This project is led by [Xixian Liang](https://xixianliang.github.io/resume/) and [Mengli Ming](https://ml-ming.dev/). We are supervised by Prof. [Ting Su](https://tingsu.github.io/). Feel free to contact us if you have any questions or advices.
 
 ## Acknowledgement
 
