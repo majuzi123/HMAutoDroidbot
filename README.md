@@ -72,7 +72,7 @@ If successfully installed, you should be able to execute `droidbot -h`.
     ```
     
 ## Trouble shooting
-Switch the `HDC_EXEC` variable from `hdc.exe` to `hdc` if you're using hdc tools for linux.
+Switch the `HDC_EXEC` variable in `droidbot/adapter/hdc.py` from `hdc.exe` to `hdc` if you're using hdc tools for Linux.
 
 We used WSL to develop this project. so the hdc tool we used in this project is actually `hdc.exe` by adding `/mnt/.../hdc.exe` on windows to the WSL PATH.
 
