@@ -1,6 +1,6 @@
 ## :memo: About
-HMDroidbot (HM stands for HarmonyOS) is a lightweight test input generator for HarmonyOS. It forks from [Droidbot](https://github.com/honeynet/droidbot) and supports HarmonyOS NEXT devices.
-It can send random or scripted input events to an HarmonyOS app, achieve higher test coverage more quickly, and generate a UI transition graph (UTG) after testing.
+HMDroidbot (HM stands for HarmonyOS, Droid stands for Android) is a lightweight test input generator for HarmonyOS (and Android). It forks from [Droidbot](https://github.com/honeynet/droidbot) and supports HarmonyOS NEXT devices.
+It can send random or scripted input events to test an HarmonyOS app, achieve higher code coverage more quickly, and generate a UI transition graph (UTG) after testing.
 
 ## :smiling_face_with_three_hearts: Awesome Features 
 :boom: Support HarmonyOS report now! Including ability, bundle, *etc.* and some HarmonyOS-specific criteria! See the sample report below!
@@ -84,7 +84,7 @@ Switch the `HDC_EXEC` variable from `hdc.exe` to `hdc` if you're using hdc tools
 We used WSL to develop this project. so the hdc tool we used in this project is actually `hdc.exe` by adding `/mnt/.../hdc.exe` on windows to the WSL PATH.
 
 ## :mega: Info
-Currently, HMDroidbot is maintained by [华东师范大学-移动软件分析与测试小组)](https://mobile-app-analysis.github.io/). 
+Currently, HMDroidbot is maintained by [华东师范大学-移动软件分析与测试小组](https://mobile-app-analysis.github.io/). 
 
 This project is led by [Xixian Liang](https://xixianliang.github.io/resume/) and [Mengli Ming](https://ml-ming.dev/). We are supervised by Prof. [Ting Su](https://tingsu.github.io/). Feel free to contact us if you have any questions or advices.
 
