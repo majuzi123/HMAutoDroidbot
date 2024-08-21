@@ -26,7 +26,7 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
 
     We provided some sample hap for testing [here](https://github.com/XixianLiang/HarmonyOS_NEXT_apps).
 
-    + A device or an emulator connected to your host machine via `hdc`.
+    + A device or an emulator connected to your host machine via `hdc`. Use `hdc list targets` to checkout the connected device.
   
     + The `SYSTEM` variable is correctly chosen. See [trouble shooting](https://github.com/XixianLiang/HMdroidbot?tab=readme-ov-file#trouble-shooting).
   
@@ -67,7 +67,7 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
     > Attention! -a is used to specify the path to hap, please use absolute path here!
     That's it! You will find much useful information, including the UTG, generated in the output dir.
 
-    + If you are using multiple devices, you may need to use `-d <device_serial>` to specify the target device. The easiest way to determine a device's serial number is calling `hdc list targets`.
+    + If you are using multiple devices, you may need to use `-t <device_serial>` to specify the target device. The easiest way to determine a device's serial number is calling `hdc list targets`.
     + You may find the `-debug` tag useful while you are trying to debug the source code.
     + Use `-log` flag to get the hilog in HarmonyOS, which can be found in the report directory.
     + You may find other useful features in `droidbot -h`.
