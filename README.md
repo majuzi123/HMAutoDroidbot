@@ -37,11 +37,12 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
        The `pip` command will automatic grep and install the required packages for you.
         
         ```shell
-        cd droidbot/
+        git clone git@github.com:honeynet/droidbot.git
+        cd HMdroidbot
         pip install -e .
         ```
         
-        If successfully installed, you should be able to execute `droidbot -h`. (macOS can't execute `droidbot` cmd, use `python3 -m droidbot.start` instead)
+        If successfully installed, you should be able to execute `droidbot -h`. (If failed to run `droidbot` cmd, try to use `python3 -m droidbot.start -h` instead).
 
 2. **Quick Start (Only available in WSL now):**
 
@@ -52,7 +53,7 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
 
 2. **Start HMDroidbot:**
 
-    :+1: Run droidbot by `python -m`. (macOS can only use this way)
+    :+1: Run droidbot by `python -m`.
     ```bash
     python3 -m droidbot.start -a <absolute_path_to_hap> -o output_dir -is_harmonyos
     ```
