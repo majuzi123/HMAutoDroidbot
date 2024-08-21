@@ -11,9 +11,15 @@ try:
 except ImportError:
     from pipes import quote # Python 2
 
-# ! if you're on unix, swtich the hdc executable to hdc
-HDC_EXEC = "hdc.exe"
-# HDC_EXEC = "hdc"
+# ! Use the correct SYSTEM variable according to your system
+# SYSTEM = "Linux" 
+SYSTEM = "windows"
+
+
+if SYSTEM == "windows":
+    HDC_EXEC = "hdc.exe"
+elif SYSTEM == "Linux":
+    HDC_EXEC = "hdc"
 
 
 class HDCException(Exception):
@@ -88,7 +94,7 @@ class HDC(Adapter):
             self.logger.warning(msg)
             raise HDCException(msg)
 
-        args = ["hdc.exe"]
+        args = [HDC_EXEC]
         # args = [] + self.cmd_prefix    TODO 写到有设备号的时候用这一行
         args += extra_args
 
@@ -414,8 +420,12 @@ class HDC(Adapter):
         return the relative path in win style
         """
         workspace = pathlib.Path(os.getcwd())
-        relative_path = pathlib.PureWindowsPath(pathlib.Path(absolute_path).relative_to(workspace))
-        return relative_path
+
+        if SYSTEM == "windows":
+            relative_path = pathlib.PureWindowsPath(pathlib.Path(absolute_path).relative_to(workspace))
+            return relative_path
+        elif SYSTEM == "Linux":
+            return pathlib.Path(absolute_path).relative_to(workspace)
     
     def dump_view(self)->str:
         """
