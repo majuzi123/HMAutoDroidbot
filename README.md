@@ -75,11 +75,11 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
     **Example Starting Scripts**
     ```bash
     # Start by droidbot cmd
-    droidbot -a <absolute_path_to_hap> -o output -d 23E**********1843 -count 1000 -is_harmonyos -debug
+    droidbot -a <absolute_path_to_hap> -o output -t 23E**********1843 -count 1000 -is_harmonyos -debug
 
     # Start by running module. Easy to debug!
     # execute the following command in the HMDroidbot dir, which should include the setup.py.
-    python -m droidbot.start -a <absolute_path_to_hap> -o output -d 23E**********1843 -count 1000 -is_harmonyos -debug
+    python -m droidbot.start -a <absolute_path_to_hap> -o output -t 23E**********1843 -count 1000 -is_harmonyos -debug
     ```
 
     **vscode Debug file example**
