@@ -18,18 +18,6 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
 1. `Python 3.10+`
 2. `HDC cmdtool 3.1.0a+`
 
-## How to install
-
-Clone this repo and install with `pip`:
-
-```shell
-git clone 
-cd droidbot/
-pip install -e .
-```
-
-If successfully installed, you should be able to execute `droidbot -h`.
-
 ## How to use
 
 1. **Make sure you have:**
@@ -39,8 +27,23 @@ If successfully installed, you should be able to execute `droidbot -h`.
     We provided some sample hap for testing [here](https://github.com/XixianLiang/HarmonyOS_NEXT_apps).
 
     + A device or an emulator connected to your host machine via `hdc`.
+  
+    + The `SYSTEM` variable is correctly chosen. See [trouble shooting](https://github.com/XixianLiang/HMdroidbot?tab=readme-ov-file#trouble-shooting).
+  
+    + Install the required packages.
 
-2. **Quick Start**
+        Clone this repo and install with `pip`.
+
+       The `pip` command will automatic grep and install the required packages for you.
+        
+        ```shell
+        cd droidbot/
+        pip install -e .
+        ```
+        
+        If successfully installed, you should be able to execute `droidbot -h`. (macOS can't execute `droidbot` cmd, use `python3 -m droidbot.start` instead)
+
+2. **Quick Start (Only available in WSL now):**
 
     :wave: Simply run the `run_sample.sh` file we provided to download the sample hap and try HMDroidbot!
     ```bash
@@ -48,11 +51,19 @@ If successfully installed, you should be able to execute `droidbot -h`.
     ```
 
 2. **Start HMDroidbot:**
+
+    :+1: Run droidbot by `python -m`. (macOS can only use this way)
+    ```bash
+    python3 -m droidbot.start -a <absolute_path_to_hap> -o output_dir -is_harmonyos
+    ```
     
-    Basic command
+    :-1: Run droidbot by `droidbot`
     ```bash
     droidbot -a <absolute_path_to_hap> -o output_dir -is_harmonyos
     ```
+
+
+    
     > Attention! -a is used to specify the path to hap, please use absolute path here!
     That's it! You will find much useful information, including the UTG, generated in the output dir.
 
@@ -70,11 +81,19 @@ If successfully installed, you should be able to execute `droidbot -h`.
     # execute the following command in the HMDroidbot dir, which should include the setup.py.
     python -m droidbot.start -a <absolute_path_to_hap> -o output -d 23E**********1843 -count 1000 -is_harmonyos -debug
     ```
+
+    **vscode Debug file example**
+   <img width="1134" alt="image" src="https://github.com/user-attachments/assets/bffde3f3-deea-41fb-9087-fb7eb3772bd5">
+
     
 ## Trouble shooting
-Switch the `HDC_EXEC` variable in `droidbot/adapter/hdc.py` from `hdc.exe` to `hdc` if you're using hdc tools for Linux.
+You should use the correct `SYSTEM` variable in `droidbot/adapter/hdc.py`.
+
+<img width="687" alt="image" src="https://github.com/user-attachments/assets/b8de8da9-7d95-4e1e-b032-8cb5a5b00bc3">
 
 We used WSL to develop this project. so the hdc tool we used in this project is actually `hdc.exe` by adding `/mnt/.../hdc.exe` on windows to the WSL PATH.
+
+It's a little bit complicated to setup the hdc envirnmnet since the HarmonyOS NEXT is on its beta version. If you have any trouble in setting up your envirnment, feel free to contact me. 
 
 ## :mega: Info
 Currently, HMDroidbot is maintained by [华东师范大学-移动软件分析与测试小组](https://mobile-app-analysis.github.io/). 
