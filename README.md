@@ -1,3 +1,5 @@
+[中文文档](https://github.com/XixianLiang/HMDroidbot/blob/master/README_cn.md)
+
 ## :memo: About
 HMDroidbot (HM stands for HarmonyOS, Droid stands for Android) is a lightweight test input generator for HarmonyOS (and Android). It forks from [Droidbot](https://github.com/honeynet/droidbot) and supports HarmonyOS NEXT devices.
 It can send random or scripted input events to test an HarmonyOS app, achieve higher code coverage more quickly, and generate a UI transition graph (UTG) after testing.
@@ -7,7 +9,7 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
 
 ![image](https://github.com/user-attachments/assets/1dfbb6f8-c9ab-48b2-8043-5474719a7466)
 
-:boom: Support both Android and HarmonyOS devices. Use the flag `-is_harmonyos` to specify the target system.
+:boom: Support both Android and HarmonyOS NEXT devices. Use the flag `-is_harmonyos` to specify the target system.
 
 :boom: Source code improvement. Easier to read and debug. Added typing to the source code and colorized the log. Use `-debug` flag to print the debug level log to the terminal!
 
@@ -34,7 +36,21 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
 
         Clone this repo and install with `pip`.
 
-       The `pip` command will automatic grep and install the required packages for you.
+       - (Optional) You can setup a virtual envirnment before installation.
+
+       In Unix:
+       ```shell
+       python3 -m venv droidenv
+       source droidenv/bin/activate
+       ```
+
+       In Windows:
+       ```powershell
+       python3 -m venv droidenv
+       .\droidenv\Scripts\activate
+       ```
+
+        - The following `pip` command will automatic grep and install the required packages for you.
         
         ```shell
         git clone git@github.com:honeynet/droidbot.git

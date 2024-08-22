@@ -45,8 +45,6 @@ class HDC(Adapter):
     CPU_STRUCTER_PROPERTY = "const.product.cpu.abilist"
     # VERSION_SDK_PROPERTY = ''
     # VERSION_RELEASE_PROPERTY = ''
-    # RO_SECURE_PROPERTY = ''
-    # RO_DEBUGGABLE_PROPERTY = ''
 
     def __init__(self, device=None):
         """
@@ -179,137 +177,6 @@ class HDC(Adapter):
         raise NotImplementedError
         return self.get_property(HDC.VERSION_RELEASE_PROPERTY)
 
-    # def get_ro_secure(self):
-    #     """
-    #     get ro.secure value
-    #     @return: 0/1
-    #     """
-    #     return int(self.get_property(HDC.RO_SECURE_PROPERTY))
-
-    # def get_ro_debuggable(self):
-    #     """
-    #     get ro.debuggable value
-    #     @return: 0/1
-    #     """
-    #     return int(self.get_property(HDC.RO_DEBUGGABLE_PROPERTY))
-
-    # The following methods are originally from androidviewclient project.
-    # https://github.com/dtmilano/AndroidViewClient.
-    def get_display_info(self):
-        """
-        Gets C{mDefaultViewport} and then C{deviceWidth} and C{deviceHeight} values from dumpsys.
-        This is a method to obtain display dimensions and density
-        """
-        display_info = {}
-        logical_display_re = re.compile(".*DisplayViewport{valid=true, .*orientation=(?P<orientation>\d+),"
-                                        " .*deviceWidth=(?P<width>\d+), deviceHeight=(?P<height>\d+).*")
-        dumpsys_display_result = self.shell("dumpsys display")
-        if dumpsys_display_result is not None:
-            for line in dumpsys_display_result.splitlines():
-                m = logical_display_re.search(line, 0)
-                if m:
-                    for prop in ['width', 'height', 'orientation']:
-                        display_info[prop] = int(m.group(prop))
-
-        if 'width' not in display_info or 'height' not in display_info:
-            physical_display_re = re.compile('Physical size: (?P<width>\d+)x(?P<height>\d+)')
-            m = physical_display_re.search(self.shell('wm size'))
-            if m:
-                for prop in ['width', 'height']:
-                    display_info[prop] = int(m.group(prop))
-
-        if 'width' not in display_info or 'height' not in display_info:
-            # This could also be mSystem or mOverscanScreen
-            display_re = re.compile('\s*mUnrestrictedScreen=\((?P<x>\d+),(?P<y>\d+)\) (?P<width>\d+)x(?P<height>\d+)')
-            # This is known to work on older versions (i.e. API 10) where mrestrictedScreen is not available
-            display_width_height_re = re.compile('\s*DisplayWidth=(?P<width>\d+) *DisplayHeight=(?P<height>\d+)')
-            for line in self.shell('dumpsys window').splitlines():
-                m = display_re.search(line, 0)
-                if not m:
-                    m = display_width_height_re.search(line, 0)
-                if m:
-                    for prop in ['width', 'height']:
-                        display_info[prop] = int(m.group(prop))
-
-        if 'orientation' not in display_info:
-            surface_orientation_re = re.compile("SurfaceOrientation:\s+(\d+)")
-            output = self.shell("dumpsys input")
-            m = surface_orientation_re.search(output)
-            if m:
-                display_info['orientation'] = int(m.group(1))
-
-        density = None
-        float_re = re.compile(r"[-+]?\d*\.\d+|\d+")
-        d = self.get_property('ro.sf.lcd_density')
-        if float_re.match(d):
-            density = float(d)
-        else:
-            d = self.get_property('qemu.sf.lcd_density')
-            if float_re.match(d):
-                density = float(d)
-            else:
-                physical_density_re = re.compile('Physical density: (?P<density>[\d.]+)', re.MULTILINE)
-                m = physical_density_re.search(self.shell('wm density'))
-                if m:
-                    density = float(m.group('density'))
-        if density is not None:
-            display_info['density'] = density
-
-        display_info_keys = {'width', 'height', 'orientation', 'density'}
-        if not display_info_keys.issuperset(display_info):
-            self.logger.warning("getDisplayInfo failed to get: %s" % display_info_keys)
-
-        return display_info
-
-    def get_enabled_accessibility_services(self):
-        """
-        Get enabled accessibility services
-        :return: the enabled service names, each service name is in <package_name>/<service_name> format
-        """
-        r = self.shell("settings get secure enabled_accessibility_services")
-        r = re.sub(r'(?m)^WARNING:.*\n?', '', r)
-        return r.strip().split(":") if r.strip() != '' else []
-
-    def disable_accessibility_service(self, service_name):
-        """
-        Disable an accessibility service
-        :param service_name: the service to disable, in <package_name>/<service_name> format
-        """
-        service_names = self.get_enabled_accessibility_services()
-        if service_name in service_names:
-            service_names.remove(service_name)
-            self.shell("settings put secure enabled_accessibility_services %s" % ":".join(service_names))
-
-    def enable_accessibility_service(self, service_name):
-        """
-        Enable an accessibility service
-        :param service_name: the service to enable, in <package_name>/<service_name> format
-        """
-        service_names = self.get_enabled_accessibility_services()
-        if service_name not in service_names:
-            service_names.append(service_name)
-            self.shell("settings put secure enabled_accessibility_services %s" % ":".join(service_names))
-        self.shell("settings put secure accessibility_enabled 1")
-
-    def enable_accessibility_service_db(self, service_name):
-        """
-        Enable an accessibility service
-        :param service_name: the service to enable, in <package_name>/<service_name> format
-        """
-        subprocess.check_call(
-            "adb shell \""
-            "sqlite3 -batch /data/data/com.android.providers.settings/databases/settings.db \\\""
-            "DELETE FROM secure WHERE name='enabled_accessibility_services' OR name='accessibility_enabled' "
-            "OR name='touch_exploration_granted_accessibility_services' OR name='touch_exploration_enabled';"
-            "INSERT INTO secure (name, value) VALUES "
-            "('enabled_accessibility_services','" + service_name + "'), "
-            "('accessibility_enabled','1'), "
-            "('touch_exploration_granted_accessibility_services','" + service_name + "'), "
-            "('touch_exploration_enabled','1')\\\";\"", shell=True)
-        self.shell("stop")
-        time.sleep(1)
-        self.shell("start")
-
     def get_installed_apps(self):
         """
         Get the package names and apk paths of installed apps on the device
@@ -396,7 +263,6 @@ class HDC(Adapter):
         self.shell("uitest uiInput swipe %d %d %d %d %d" % (x0, y0, x1, y1, duration))
         
     def type(self, text):
-        # TODO 华为的 inputText 不太一样
         # hdc shell uitest uiInput inputText 100 100 hello
         if isinstance(text, str):
             escaped = text.replace("%s", "\\%s")
@@ -407,7 +273,7 @@ class HDC(Adapter):
         self.shell("input text %s" % encoded)
 
     """
-    TODO 从这行开始是我加的东西
+    The following function is especially for HarmonyOS NEXT
     """
     @staticmethod
     def __safe_dict_get(view_dict, key, default=None):
@@ -436,28 +302,6 @@ class HDC(Adapter):
         remote_path = r.split(":")[-1]
         return remote_path
 
-    # def dump_views(self):
-    #     """
-    #     dump layout and recv the layout from the device
-    #     """
-    #     r = self.shell("uitest dumpLayout")
-    #     remote_path = r.split(":")[-1]
-    #     file_name = os.path.basename(remote_path)
-    #     temp_path = os.path.join(self.device.output_dir, "temp")
-    #     local_path = os.path.join(os.getcwd(), temp_path, file_name)
-
-    #     p = "file recv {} {}".format(remote_path, HDC.get_relative_path(local_path))
-
-    #     r2 = self.run_cmd("file recv {} {}".format(remote_path, HDC.get_relative_path(local_path)))
-    #     assert not r2.startswith("[Fail]"), "Error with receiving dump layout"
-
-    #     with open(local_path, "r") as f:
-    #         import json
-    #         raw_views = json.load(f)
-    #     # print(r)
-    #     return raw_views
-
-
     def get_views(self, views_path):
         """
         bfs the view tree and turn it into the android style
@@ -468,7 +312,7 @@ class HDC(Adapter):
         self.views = []
 
 
-        with open(views_path, "r") as f:
+        with open(views_path, "r", encoding="utf-8") as f:
             import json
             self.views_raw = json.load(f)
 
