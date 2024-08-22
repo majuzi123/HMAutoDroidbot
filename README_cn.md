@@ -51,7 +51,7 @@ HMDroidbot（HM代表HarmonyOS，Droid代表Android）是一个轻量级的测�
         - 下面的 `pip` 命令将自动抓取并安装所需的包。
         
         ```shell
-        git clone git@github.com:honeynet/droidbot.git
+        git clone git@github.com:XixianLiang/HMDroidbot.git
         cd HMdroidbot
         pip install -e .
         ```

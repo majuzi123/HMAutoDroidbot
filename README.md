@@ -53,7 +53,7 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
         - The following `pip` command will automatic grep and install the required packages for you.
         
         ```shell
-        git clone git@github.com:honeynet/droidbot.git
+        git clone git@github.com:XixianLiang/HMDroidbot.git
         cd HMdroidbot
         pip install -e .
         ```
