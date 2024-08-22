@@ -1,5 +1,5 @@
 ## :memo: 关于
-HMDroidbot（HM代表HarmonyOS，Droid代表Android）是一个轻量级的测试输入生成器，适用于HarmonyOS（兼容Android）。它是从[Droidbot](https://github.com/honeynet/droidbot)fork出来的，支持HarmonyOS NEXT设备。
+HMDroidbot（HM代表HarmonyOS，Droid代表Android）是一个轻量级的测试输入生成器，适用于HarmonyOS（兼容Android）。它是从[Droidbot](https://github.com/honeynet/droidbot) fork出来的，支持HarmonyOS NEXT设备。
 它可以发送随机或脚本化的输入事件来测试HarmonyOS应用程序，更快地实现更高的代码覆盖率，并在测试后生成一个UI跳转关系图（UTG）。
 
 ## :smiling_face_with_three_hearts: 功能特性
