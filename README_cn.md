@@ -106,12 +106,12 @@ HMDroidbot（HM代表HarmonyOS，Droid代表Android）是一个轻量级的测�
 
 我们使用WSL开发该项目，因此我们在此项目中使用的hdc工具实际上是通过在Windows上添加 `/mnt/.../hdc.exe` 到WSL路径的 `hdc.exe`。
 
-由于HarmonyOS NEXT处于测试版，设置hdc环境有点复杂。如果您在设置环境时遇到任何问题，请随时与我联系。
+由于HarmonyOS NEXT处于测试版，配置hdc环境的过程有点复杂（尤其在WSL上）。WSL的配置总体思路是将hdc工具装在主系统，并从WSL的`mnt`路径下将主系统路径下的`hdc.exe` export出去（因为手机连在主系统上，这样做不用再配置USB口的转发），如果您在配置环境时遇到任何问题，请随时与我联系。
 
 ## :mega: 信息
 目前，HMDroidbot由[华东师范大学-移动软件分析与测试小组](https://mobile-app-analysis.github.io/)维护。
 
-该项目由[Xixian Liang](https://xixianliang.github.io/resume/)和[Mengli Ming](https://ml-ming.dev/)领导。我们在[Ting Su教授](https://tingsu.github.io/)的指导下进行工作。如果您有任何问题或建议，请随时与我们联系。
+该项目的主要负责人是[梁锡贤](https://xixianliang.github.io/resume/)和[明孟立](https://ml-ming.dev/)。我们的指导老师是[苏亭教授](https://tingsu.github.io/)。如果您有任何问题或建议，请随时与我们联系。
 
 ## 致谢
 
