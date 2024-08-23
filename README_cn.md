@@ -24,7 +24,7 @@ HMDroidbot（HM代表HarmonyOS，Droid代表Android）是一个轻量级的测�
 
     + 要分析的应用程序的 `.hap` 文件路径。
 
-    我们提供了一些用于测试的示例hap [在这里](https://github.com/XixianLiang/HarmonyOS_NEXT_apps)。
+    我们提供了一些[用于测试的示例hap](https://github.com/XixianLiang/HarmonyOS_NEXT_apps)。
 
     + 一台通过 `hdc` 连接到主机的设备或模拟器。使用 `hdc list targets` 检查连接的设备。
 
@@ -32,31 +32,31 @@ HMDroidbot（HM代表HarmonyOS，Droid代表Android）是一个轻量级的测�
 
     + 安装所需的包。
 
-        克隆此仓库并使用 `pip` 安装。
+        clone 此仓库并使用 `pip` 安装。
 
-        - （可选） 你可以先设置一个虚拟环境，详情请见python的venv模块
+        :one: *（可选）* 你可以先设置一个虚拟环境，详情请见 python 的 [venv 模块](https://realpython.com/python-virtual-environments-a-primer/)
 
-        Unix系统:
+       **macOS 或 Linux 系统:**
        ```shell
        python3 -m venv droidenv
        source droidenv/bin/activate
        ```
 
-       Windows系统:
+       **Windows系统:**
        ```powershell
        python3 -m venv droidenv
        .\droidenv\Scripts\activate
        ```
 
-        - 下面的 `pip` 命令将自动抓取并安装所需的包。
+        :two: 下面的 `pip` 命令将自动抓取并安装所需的包。
         
         ```shell
-        git clone git@github.com:XixianLiang/HMDroidbot.git
-        cd HMdroidbot
+        git clone https://github.com/XixianLiang/HMDroidbot.git
+        cd HMDroidbot
         pip install -e .
         ```
         
-        如果安装成功，您应该能够执行 `droidbot -h`。（如果无法运行 `droidbot` 命令，请尝试使用 `python3 -m droidbot.start -h` 代替）。
+        :three: 如果安装成功，您应该能够执行 `droidbot -h`。（如果无法运行 `droidbot` 命令，请尝试使用 `python3 -m droidbot.start -h` 代替）。
 
 2. **快速开始（目前仅在WSL中可用）：**
 
@@ -65,14 +65,14 @@ HMDroidbot（HM代表HarmonyOS，Droid代表Android）是一个轻量级的测�
     bash run_sample.sh
     ```
 
-2. **启动HMDroidbot：**
+3. **启动HMDroidbot：**
 
-    :+1: 通过 `python -m` 运行droidbot。
+    通过 `python -m` 运行droidbot。
     ```bash
     python3 -m droidbot.start -a <hap的绝对路径> -o output_dir -is_harmonyos
     ```
     
-    :-1: 通过 `droidbot` 运行droidbot。
+    通过 `droidbot` 运行droidbot。
     ```bash
     droidbot -a <hap的绝对路径> -o output_dir -is_harmonyos
     ```
@@ -81,8 +81,8 @@ HMDroidbot（HM代表HarmonyOS，Droid代表Android）是一个轻量级的测�
     测试开始后，您将在输出目录中实时找到许多有用的信息，包括生成的UTG。
 
     + 如果您使用多个设备，您可能需要使用 `-t <device_serial>` 来指定目标设备。确定设备序列号的最简单方法是调用 `hdc list targets`。
-    + 在调试源代码时，您可能会发现 `-debug` 标志很有用。
-    + 使用 `-log` 标志获取HarmonyOS中的hilog，可以在报告目录中找到。
+    + 在调试源代码时， `-debug` 很有用。
+    + 使用 `-log` 标志获取HarmonyOS中的hilog，可以在报告目录中找到这个文件。
     + 您可以在 `droidbot -h` 中找到其他有用的功能。
 
     **示例启动脚本**
@@ -91,11 +91,12 @@ HMDroidbot（HM代表HarmonyOS，Droid代表Android）是一个轻量级的测�
     droidbot -a <hap的绝对路径> -o output -t 23E**********1843 -count 1000 -is_harmonyos -debug
 
     # 通过运行模块启动。易于调试！
-    # 在HMDroidbot目录中执行以下命令，该目录应包含setup.py。
+    # 在HMDroidbot目录中执行以下命令。
     python -m droidbot.start -a <hap的绝对路径> -o output -t 23E**********1843 -count 1000 -is_harmonyos -debug
     ```
 
-    **vscode调试文件示例**
+    **vscode `launch.json` 文件示例**
+
    <img width="1134" alt="image" src="https://github.com/user-attachments/assets/bffde3f3-deea-41fb-9087-fb7eb3772bd5">
 
     
@@ -112,6 +113,10 @@ HMDroidbot（HM代表HarmonyOS，Droid代表Android）是一个轻量级的测�
 目前，HMDroidbot由[华东师范大学-移动软件分析与测试小组](https://mobile-app-analysis.github.io/)维护。
 
 该项目的主要负责人是[梁锡贤](https://xixianliang.github.io/resume/)和[明孟立](https://ml-ming.dev/)。我们的指导老师是[苏亭教授](https://tingsu.github.io/)。如果您有任何问题或建议，请随时与我们联系。
+
+加入QQ交流群 （群号 904153331）来联系我们并获取最新资讯。
+
+<img width="284" alt="image" src="https://github.com/user-attachments/assets/c42c2bdf-6c3d-4774-a2a4-34adcc84cfe7">
 
 ## 致谢
 

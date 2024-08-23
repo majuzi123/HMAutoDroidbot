@@ -1,4 +1,5 @@
-[中文文档](https://github.com/XixianLiang/HMDroidbot/blob/master/README_cn.md)
+### :book: [中文文档](https://github.com/XixianLiang/HMDroidbot/blob/master/README_cn.md)
+
 
 ## :memo: About
 HMDroidbot (HM stands for HarmonyOS, Droid stands for Android) is a lightweight test input generator for HarmonyOS (and Android). It forks from [Droidbot](https://github.com/honeynet/droidbot) and supports HarmonyOS NEXT devices.
@@ -36,9 +37,9 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
 
         Clone this repo and install with `pip`.
 
-       - (Optional) You can setup a virtual envirnment before installation.
+       :one: *(Optional)* You can setup a virtual envirnment before installation. See [venv module](https://realpython.com/python-virtual-environments-a-primer/) for details.
 
-       In Unix:
+       In macOS or Linux:
        ```shell
        python3 -m venv droidenv
        source droidenv/bin/activate
@@ -50,15 +51,15 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
        .\droidenv\Scripts\activate
        ```
 
-        - The following `pip` command will automatic grep and install the required packages for you.
+        :two: The following `pip` command will automatic grep and install the required packages for you.
         
         ```shell
-        git clone git@github.com:XixianLiang/HMDroidbot.git
-        cd HMdroidbot
+        git clone https://github.com/XixianLiang/HMDroidbot.git
+        cd HMDroidbot
         pip install -e .
         ```
         
-        If successfully installed, you should be able to execute `droidbot -h`. (If failed to run `droidbot` cmd, try to use `python3 -m droidbot.start -h` instead).
+        :three: If successfully installed, you should be able to execute `droidbot -h`. (If failed to run `droidbot` cmd, try to use `python3 -m droidbot.start -h` instead).
 
 2. **Quick Start (Only available in WSL now):**
 
@@ -69,12 +70,12 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
 
 2. **Start HMDroidbot:**
 
-    :+1: Run droidbot by `python -m`.
+    Run droidbot by `python -m`.
     ```bash
     python3 -m droidbot.start -a <absolute_path_to_hap> -o output_dir -is_harmonyos
     ```
     
-    :-1: Run droidbot by `droidbot`
+    Run droidbot by `droidbot`
     ```bash
     droidbot -a <absolute_path_to_hap> -o output_dir -is_harmonyos
     ```
@@ -99,7 +100,8 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
     python -m droidbot.start -a <absolute_path_to_hap> -o output -t 23E**********1843 -count 1000 -is_harmonyos -debug
     ```
 
-    **vscode Debug file example**
+    **vscode `launch.json` example**
+
    <img width="1134" alt="image" src="https://github.com/user-attachments/assets/bffde3f3-deea-41fb-9087-fb7eb3772bd5">
 
     
@@ -116,6 +118,10 @@ Due to HarmonyOS NEXT being in beta, the process of configuring the hdc environm
 Currently, HMDroidbot is maintained by [华东师范大学-移动软件分析与测试小组](https://mobile-app-analysis.github.io/). 
 
 This project is led by [Xixian Liang](https://xixianliang.github.io/resume/) and [Mengli Ming](https://ml-ming.dev/). We are supervised by Prof. [Ting Su](https://tingsu.github.io/). Feel free to contact us if you have any questions or advices.
+
+Join the QQ group (ID 904153331) to contact us and get the latest info.
+
+<img width="284" alt="image" src="https://github.com/user-attachments/assets/c42c2bdf-6c3d-4774-a2a4-34adcc84cfe7">
 
 ## Acknowledgement
 
