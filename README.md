@@ -112,7 +112,7 @@ You should use the correct `SYSTEM` variable in `droidbot/adapter/hdc.py`.
 
 We used WSL to develop this project. so the hdc tool we used in this project is actually `hdc.exe` by adding `/mnt/.../hdc.exe` on windows to the WSL PATH.
 
-Due to HarmonyOS NEXT being in beta, the process of configuring the hdc environment is somewhat complex (especially on WSL). The overall idea for WSL configuration is to install the hdc tool on the host system and export the `hdc.exe` from the host system path through the WSL `mnt` path (since the phone is connected to the host system, this eliminates the need to configure USB port forwarding). If you encounter any issues while setting up the environment, please feel free to contact me.
+Due to HarmonyOS NEXT being in beta, the process of configuring the hdc environment is somewhat complex (especially on WSL). The overall idea for WSL configuration is to install the hdc tool on the host system and export the `hdc.exe` from the host system path through the WSL `mnt` path (since the phone is connected to the host system, this eliminates the need to configure USB port forwarding). If you encounter any issues while setting up the environment, please feel free to contact us.
 
 ## :mega: Info
 Currently, HMDroidbot is maintained by [华东师范大学-移动软件分析与测试小组](https://mobile-app-analysis.github.io/). 
