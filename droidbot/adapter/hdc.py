@@ -6,10 +6,13 @@ from .adapter import Adapter
 import time
 import os
 import pathlib
+import typing
 try:
     from shlex import quote # Python 3
 except ImportError:
     from pipes import quote # Python 2
+from abc import abstractmethod, ABC
+
 
 # ! Use the correct SYSTEM variable according to your system
 # SYSTEM = "Linux" 
@@ -28,6 +31,11 @@ class HDCException(Exception):
     """
     pass
 
+class Dumper(ABC):
+
+    @abstractmethod
+    def get_views(self):
+        pass
 
 class HDC(Adapter):
     """
@@ -78,7 +86,7 @@ class HDC(Adapter):
         #     import shutil
         #     shutil.rmtree(temp_path)
 
-
+    
     def run_cmd(self, extra_args):
         """
         run a hdc command and return the output
@@ -105,7 +113,7 @@ class HDC(Adapter):
         self.logger.debug(r)
         return r
 
-
+    
     def shell(self, extra_args):
         """
         run an `hdc shell` command
@@ -120,7 +128,11 @@ class HDC(Adapter):
             raise HDCException(msg)
 
         shell_extra_args = ['shell'] + [ quote(arg) for arg in extra_args ]
-        return self.run_cmd(shell_extra_args)
+
+        try:
+            return self.run_cmd(shell_extra_args)
+        except FileNotFoundError as e:
+            raise HDCException(f"""{HDC_EXEC} command not found. You're running HMDroidbot in {SYSTEM} mode. Please checkout the SYSTEM variable or your envirnment""")
 
     def check_connectivity(self):
         """
@@ -276,7 +288,7 @@ class HDC(Adapter):
     The following function is especially for HarmonyOS NEXT
     """
     @staticmethod
-    def __safe_dict_get(view_dict, key, default=None):
+    def safe_dict_get(view_dict, key, default=None):
         value = view_dict[key] if key in view_dict else None
         return value if value is not None else default
     
@@ -293,15 +305,199 @@ class HDC(Adapter):
         elif SYSTEM == "Linux":
             return pathlib.Path(absolute_path).relative_to(workspace)
     
+    def push_file(self, local_file, remote_dir="/sdcard/"):
+        """
+        push file/directory to target_dir
+        :param local_file: path to file/directory in host machine
+        :param remote_dir: path to target directory in device
+        :return:
+        """
+        if not os.path.exists(local_file):
+            self.logger.warning("push_file file does not exist: %s" % local_file)
+        self.run_cmd(["file send", local_file, remote_dir])
+
+    def pull_file(self, remote_file, local_file):
+        r = self.run_cmd(["file", "recv", remote_file, local_file])
+        assert not r.startswith("[Fail]"), "Error with receiving file"
+        
+    def get_views(self, output_dir):
+
+        # dumper = HiDumper(hdc=self)
+
+        dumper = UitestDumper(hdc=self, output_dir=output_dir)
+        return dumper.views
+
+class HiDumper(Dumper):
+
+    def __init__(self, hdc:HDC):
+        self.hdc = hdc
+        focus_window = self.get_focus_window()
+
+        r = self.dump_target_window(focus_window)
+        self.dump_layout(fp=iter(r.splitlines(keepends=True)))
+
+        self.adapt_hierachy()
+
+    def dump_target_window(self, focus_window):
+        return self.hdc.run_cmd(f"hdc shell hidumper -s WindowManagerService -a '-w {focus_window} -inspector'")
+
+    def get_focus_window(self):
+        r = self.hdc.run_cmd(r"hdc shell hidumper -s WindowManagerService -a '-a'")
+
+        match = re.search(r'Focus window:\s*(\d+)', r)
+
+        if match:
+            focus_window = match.group(1)
+            return focus_window
+        else:
+            raise HDCException("Error when getting focus_window")
+    
+    def get_views(self):
+        return "6"
+
+    """
+    process the stdout to get the raw hierachy
+    """
+    indent_cache = -1
+    windowInfo = dict()
+    _hierachy:list[dict] = list()
+
+    def get_indent(self, line):
+        return int((len(line) - len(line.lstrip())) / 2)
+    
+    def get_line_info(self, line:str):
+        # print(f"getting_line: {line}")
+        return [ _.strip(" |\n") for _ in line.split(":", maxsplit=1)]
+    
+    def get_window_info(self, line:str, fp:typing.Iterable[str]):
+        while "last vsyncId" not in line:
+            key, value = self.get_line_info(line)
+            self.windowInfo[key] = value
+
+            line = next(fp)
+    
+    def get_hierachy(self, line:str, fp:typing.Iterable[str]):
+        if not line.strip():
+            raise StopIteration
+        
+        node_indent = self.get_indent(line)
+        node = {"type":line.split()[1],
+                "child_count":int(line.split(":")[-1]),
+                "level": node_indent}
+        
+        while "childTree" not in (line := next(fp)):
+            key, value = self.get_line_info(line)
+            node[key] = value
+        
+        node["children"] = []
+        self._hierachy.append(node)
+
+        if node_indent > 1:
+            for parent in reversed(self._hierachy):
+                if parent["level"] == node_indent - 1:
+                    parent["children"].append(node["ID"])
+                    break
+
+
+    def dump_layout(self, fp):
+
+        # the parsing procedure can be reconized as a state machine
+        # we should first skip the irrelavent hinting info, then parse the window info, finally the hierachy tree
+        # skip hinting ====begin_flag===> parse window info ====widget_flag===> parse hierachy tree 
+        begin_flag = False
+        widget_flag = False
+
+        while True:
+            try:
+                line = next(fp)
+
+                if "WindowManagerService" in line:
+                    begin_flag = True
+                    continue
+                
+                if not begin_flag:
+                    continue
+
+                if "->" in line:
+                    widget_flag = True
+                
+                if not widget_flag:
+                    self.get_window_info(line, fp)
+                else:
+                    self.get_hierachy(line, fp)
+
+            except StopIteration:
+                # End of file
+                break
+        
+        # self.windowInfo
+        # self._hierachy
+
+        # if logger.level != logging.DEBUG:
+        #     return
+        # # the following code is for assertion
+        # for node in self._hierachy:
+        #     logger.debug(f"checking node {node}")
+        #     assert node["child_count"] == len(node["children"])
+
+    """
+    proccess the hierachy to adapt it to droidbot style
+    """
+
+    def adapt_hierachy(self):
+        self.hierachy = []
+        for _node in self._hierachy:
+            node = dict()
+            for key, value in _node.items():
+                if key in ["visible", "clickable", "checkable", "scrollable", "checked"]:
+                    node[key] = bool(int(value))
+                    continue
+                if key == "longclickable":
+                    node["long_clickable"] = bool(int(value))
+                    continue
+                if key == "ID":
+                    node["accessibilityId"] = int(value)
+                    node["temp_id"] = int(value)
+                    continue
+                if key == "children":
+                    node[key] = [int(_) for _ in value]
+                    continue
+
+            # proccess the bounds
+            top, left, width, height = [int(float(_node["top"])), int(float(_node["left"])),
+                                        int(float(_node["width"])), int(float(_node["height"]))]
+            node["bounds"] = [[left, top], [left+width, top+height]]
+            node["size"] = f"{width}*{height}"
+
+            self.hierachy.append(node)
+        
+        self.hierachy
+
+class UitestDumper(Dumper):
+    """
+    This class use uitest to dump layout. Which is 25 times slower than Hidumper.
+    But uitest dumpLayout can get some useful messages such as key and pagePath.
+
+    core cmd: hdc shell uitest dumpLayout
+    """
+
+    _views = None
+
+    def __init__(self, hdc:HDC, output_dir:str):
+        self.output_dir = output_dir
+        self.hdc = hdc
+
     def dump_view(self)->str:
         """
         Using uitest to dumpLayout, and return the remote path of the layout file
         :Return: remote path
         """
-        r = self.shell("uitest dumpLayout")
+        r = self.hdc.shell("uitest dumpLayout")
+        assert "DumpLayout saved to" in r, "Error when dumping layout"
+
         remote_path = r.split(":")[-1]
         return remote_path
-
+    
     def get_views(self, views_path):
         """
         bfs the view tree and turn it into the android style
@@ -309,7 +505,7 @@ class HDC(Adapter):
         ### :param: view path
         """
         from collections import deque
-        self.views = []
+        self._views = []
 
 
         with open(views_path, "r", encoding="utf-8") as f:
@@ -333,15 +529,15 @@ class HDC(Adapter):
             node["attributes"]["children"] = list()
 
             # process the view, turn it into android style and add to view list
-            self.views.append(self.get_adb_view(node["attributes"]))
+            self._views.append(self.get_adb_view(node["attributes"]))
 
             # bfs the tree
             for child in node["children"]:
                 child["attributes"]["parent"] = temp_id
                 if "bundleName" in node["attributes"]:
-                    child["attributes"]["bundleName"] = HDC.__safe_dict_get(node["attributes"], "bundleName")
-                    assert HDC.__safe_dict_get(node["attributes"], "pagePath") is not None, "pagePath not exist"
-                    child["attributes"]["pagePath"] = HDC.__safe_dict_get(node["attributes"], "pagePath")
+                    child["attributes"]["bundleName"] = HDC.safe_dict_get(node["attributes"], "bundleName")
+                    assert self.hdc.safe_dict_get(node["attributes"], "pagePath") is not None, "pagePath not exist"
+                    child["attributes"]["pagePath"] = self.hdc.safe_dict_get(node["attributes"], "pagePath")
                 queue.append(child)
             
             temp_id += 1
@@ -349,17 +545,17 @@ class HDC(Adapter):
         # get the 'children' attributes
         self.get_view_children()
 
-        return self.views
+        return self._views
         
     def get_view_children(self):
         """
         get the 'children' attributes by the 'parent'
         """
-        for view in self.views:
-            temp_id = HDC.__safe_dict_get(view, "parent")
+        for view in self._views:
+            temp_id = HDC.safe_dict_get(view, "parent")
             if temp_id > -1:
-                self.views[temp_id]["children"].append(view["temp_id"])
-                assert self.views[temp_id]["temp_id"] == temp_id
+                self._views[temp_id]["children"].append(view["temp_id"])
+                assert self._views[temp_id]["temp_id"] == temp_id
     
     def get_adb_view(self, raw_view:dict):
         """
@@ -408,3 +604,19 @@ class HDC(Adapter):
     def get_size(self, raw_bounds:str):
         bounds = self.get_bounds(raw_bounds)
         return f"{bounds[1][0]-bounds[0][0]}*{bounds[1][1]-bounds[0][1]}"
+    
+    @property
+    def views(self):
+        if self._views is None:
+            if self.output_dir is None:
+                return None
+
+            remote_path = self.dump_view()
+
+            file_name = os.path.basename(remote_path)
+            temp_path = os.path.join(self.output_dir, "temp")
+            local_path = os.path.join(os.getcwd(), temp_path, file_name)
+
+            self.hdc.pull_file(remote_path, HDC.get_relative_path(local_path))
+
+            return self.get_views(local_path)

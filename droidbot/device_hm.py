@@ -89,25 +89,6 @@ class DeviceHM(Device):
                 else:
                     print("[CONNECTION] %s is enabled but not connected." % adapter_name)
 
-    # def wait_for_device(self):
-    #     """
-    #     wait until the device is fully booted
-    #     :return:
-    #     """
-    #     self.logger.info("waiting for device")
-    #     try:
-    #         subprocess.check_call(["adb", "-s", self.serial, "wait-for-device"])
-    #         # while True:
-    #         #     out = subprocess.check_output(
-    #         #         ["adb", "-s", self.serial, "shell", "getprop", "init.svc.bootanim"]).split()[0]
-    #         #     if not isinstance(out, str):
-    #         #         out = out.decode()
-    #         #     if out == "stopped":
-    #         #         break
-    #         #     time.sleep(1)
-    #     except:
-    #         self.logger.warning("error waiting for device")
-
     def set_up(self):
         """
         Set connections on this device
@@ -260,184 +241,6 @@ class DeviceHM(Device):
         """
         self.hdc.unlock()
 
-    def shake(self):
-        """
-        shake the device
-        """
-        # TODO the telnet-simulated shake event is not usable
-        telnet = self.telnet
-        if telnet is None:
-            self.logger.warning("Telnet not connected, so can't shake the device.")
-        sensor_xyz = [(-float(v * 10) + 1, float(v) + 9.8, float(v * 2) + 0.5) for v in [1, -1, 1, -1, 1, -1, 0]]
-        for (x, y, z) in sensor_xyz:
-            telnet.run_cmd("sensor set acceleration %f:%f:%f" % (x, y, z))
-
-    def add_env(self, env):
-        """
-        set env to the device
-        :param env: instance of AppEnv
-        """
-        self.logger.info("deploying env: %s" % env)
-        env.deploy(self)
-
-    def add_contact(self, contact_data):
-        """
-        add a contact to device
-        :param contact_data: dict of contact, should have keys like name, phone, email
-        :return:
-        """
-        assert self.adb is not None
-        contact_intent = Intent(prefix="start",
-                                action="android.intent.action.INSERT",
-                                mime_type="vnd.android.cursor.dir/contact",
-                                extra_string=contact_data)
-        self.send_intent(intent=contact_intent)
-        time.sleep(2)
-        self.adb.press("BACK")
-        time.sleep(2)
-        self.adb.press("BACK")
-        return True
-
-    def receive_call(self, phone=DEFAULT_NUM):
-        """
-        simulate a income phonecall
-        :param phone: str, phonenum
-        :return:
-        """
-        assert self.telnet is not None
-        return self.telnet.run_cmd("gsm call %s" % phone)
-
-    def cancel_call(self, phone=DEFAULT_NUM):
-        """
-        cancel phonecall
-        :param phone: str, phonenum
-        :return:
-        """
-        assert self.telnet is not None
-        return self.telnet.run_cmd("gsm cancel %s" % phone)
-
-    def accept_call(self, phone=DEFAULT_NUM):
-        """
-        accept phonecall
-        :param phone: str, phonenum
-        :return:
-        """
-        assert self.telnet is not None
-        return self.telnet.run_cmd("gsm accept %s" % phone)
-
-    def call(self, phone=DEFAULT_NUM):
-        """
-        simulate a outcome phonecall
-        :param phone: str, phonenum
-        :return:
-        """
-        call_intent = Intent(prefix='start',
-                             action="android.intent.action.CALL",
-                             data_uri="tel:%s" % phone)
-        return self.send_intent(intent=call_intent)
-
-    def send_sms(self, phone=DEFAULT_NUM, content=DEFAULT_CONTENT):
-        """
-        send a SMS
-        :param phone: str, phone number of receiver
-        :param content: str, content of sms
-        :return:
-        """
-        send_sms_intent = Intent(prefix='start',
-                                 action="android.intent.action.SENDTO",
-                                 data_uri="sms:%s" % phone,
-                                 extra_string={'sms_body': content},
-                                 extra_boolean={'exit_on_sent': 'true'})
-        self.send_intent(intent=send_sms_intent)
-        time.sleep(2)
-        self.adb.press('66')
-        return True
-
-    def receive_sms(self, phone=DEFAULT_NUM, content=DEFAULT_CONTENT):
-        """
-        receive a SMS
-        :param phone: str, phone number of sender
-        :param content: str, content of sms
-        :return:
-        """
-        assert self.telnet is not None
-        return self.telnet.run_cmd("sms send %s '%s'" % (phone, content))
-
-    def set_gps(self, x, y):
-        """
-        set GPS positioning to x,y
-        :param x: float
-        :param y: float
-        :return:
-        """
-        return self.telnet.run_cmd("geo fix %s %s" % (x, y))
-
-    def set_continuous_gps(self, center_x, center_y, delta_x, delta_y):
-        import threading
-        gps_thread = threading.Thread(
-            target=self.set_continuous_gps_blocked,
-            args=(center_x, center_y, delta_x, delta_y))
-        gps_thread.start()
-        return True
-
-    def set_continuous_gps_blocked(self, center_x, center_y, delta_x, delta_y):
-        """
-        simulate GPS on device via telnet
-        this method is blocked
-        @param center_x: x coordinate of GPS position
-        @param center_y: y coordinate of GPS position
-        @param delta_x: range of x coordinate
-        @param delta_y: range of y coordinate
-        """
-        import random
-        while self.connected:
-            x = random.random() * delta_x * 2 + center_x - delta_x
-            y = random.random() * delta_y * 2 + center_y - delta_y
-            self.set_gps(x, y)
-            time.sleep(3)
-
-    def get_settings(self):
-        """
-        get device settings via adb
-        """
-        db_name = "/data/data/com.android.providers.settings/databases/settings.db"
-
-        system_settings = {}
-        out = self.adb.shell("sqlite3 %s \"select * from %s\"" % (db_name, "system"))
-        out_lines = out.splitlines()
-        for line in out_lines:
-            segs = line.split('|')
-            if len(segs) != 3:
-                continue
-            system_settings[segs[1]] = segs[2]
-
-        secure_settings = {}
-        out = self.adb.shell("sqlite3 %s \"select * from %s\"" % (db_name, "secure"))
-        out_lines = out.splitlines()
-        for line in out_lines:
-            segs = line.split('|')
-            if len(segs) != 3:
-                continue
-            secure_settings[segs[1]] = segs[2]
-
-        self.settings['system'] = system_settings
-        self.settings['secure'] = secure_settings
-        return self.settings
-
-    def change_settings(self, table_name, name, value):
-        """
-        dangerous method, by calling this, change settings.db in device
-        be very careful for sql injection
-        :param table_name: table name to work on, usually it is system or secure
-        :param name: settings name to set
-        :param value: settings value to set
-        """
-        db_name = "/data/data/com.android.providers.settings/databases/settings.db"
-
-        self.adb.shell("sqlite3 %s \"update '%s' set value='%s' where name='%s'\""
-                       % (db_name, table_name, value, name))
-        return True
-
     def send_intent(self, intent):
         """
         send an intent to device via am (ActivityManager)
@@ -589,8 +392,6 @@ class DeviceHM(Device):
         @return:
         """
         assert isinstance(app, AppHM)
-        # subprocess.check_call(["adb", "-s", self.serial, "uninstall", app.get_package_name()],
-        #                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         package_name = app.get_package_name()
         if package_name not in self.hdc.get_installed_apps():
             install_cmd = [HDC_EXEC, "-t", self.serial, "install", "-r"]
@@ -642,47 +443,6 @@ class DeviceHM(Device):
         import json
         dumpsys = json.load(fp)
 
-        # main_activity = None
-        # activity_line_re = re.compile("[^ ]+ ([^ ]+)/([^ ]+) filter [^ ]+")
-        # action_re = re.compile("Action: \"([^ ]+)\"")
-        # category_re = re.compile("Category: \"([^ ]+)\"")
-
-        # activities = {}
-
-        # cur_package = None
-        # cur_activity = None
-        # cur_actions = []
-        # cur_categories = []
-
-        # for line in lines:
-        #     line = line.strip()
-        #     m = activity_line_re.match(line)
-        #     if m:
-        #         activities[cur_activity] = {
-        #             "actions": cur_actions,
-        #             "categories": cur_categories
-        #         }
-        #         cur_package = m.group(1)
-        #         cur_activity = m.group(2)
-        #         if cur_activity.startswith("."):
-        #             cur_activity = cur_package + cur_activity
-        #         cur_actions = []
-        #         cur_categories = []
-        #     else:
-        #         m1 = action_re.match(line)
-        #         if m1:
-        #             cur_actions.append(m1.group(1))
-        #         else:
-        #             m2 = category_re.match(line)
-        #             if m2:
-        #                 cur_categories.append(m2.group(1))
-
-        # if cur_activity is not None:
-        #     activities[cur_activity] = {
-        #         "actions": cur_actions,
-        #         "categories": cur_categories
-        #     }
-
         # main ability
         return dumpsys["hapModuleInfos"][0]["mainAbility"]
 
@@ -702,38 +462,6 @@ class DeviceHM(Device):
                 print("Please wait while uninstalling the app...")
                 time.sleep(2)
             uninstall_p.terminate()
-
-    def get_app_pid(self, app):
-        if isinstance(app, AppHM):
-            package = app.get_package_name()
-        else:
-            package = app
-
-        name2pid = {}
-        ps_out = self.adb.shell(["ps"])
-        ps_out_lines = ps_out.splitlines()
-        ps_out_head = ps_out_lines[0].split()
-        if ps_out_head[1] != "PID" or ps_out_head[-1] != "NAME":
-            self.logger.warning("ps command output format error: %s" % ps_out_head)
-        for ps_out_line in ps_out_lines[1:]:
-            segs = ps_out_line.split()
-            if len(segs) < 4:
-                continue
-            pid = int(segs[1])
-            name = segs[-1]
-            name2pid[name] = pid
-
-        if package in name2pid:
-            return name2pid[package]
-
-        possible_pids = []
-        for name in name2pid:
-            if name.startswith(package):
-                possible_pids.append(name2pid[name])
-        if len(possible_pids) > 0:
-            return min(possible_pids)
-
-        return None
 
     def push_file(self, local_file, remote_dir="/sdcard/"):
         """
@@ -832,7 +560,7 @@ class DeviceHM(Device):
 
     def get_views(self):
         if self.hdc:
-            views = self.hdc_get_views()
+            views = self.get_views()
             if views:
                 return views
             else:
@@ -841,21 +569,8 @@ class DeviceHM(Device):
         self.logger.warning("failed to get current views!")
         return None
 
-    def hdc_get_views(self):
-        if self.output_dir is None:
-            return None
-
-        r = self.hdc.shell("uitest dumpLayout")
-        assert "DumpLayout saved to" in r, "Error when dumping layout"
-
-        remote_path = r.split(":")[-1]
-        file_name = os.path.basename(remote_path)
-        temp_path = os.path.join(self.output_dir, "temp")
-        local_path = os.path.join(os.getcwd(), temp_path, file_name)
-
-        self.pull_file(remote_path, HDC.get_relative_path(local_path))
-
-        return self.hdc.get_views(local_path)
+    def get_views(self):
+        return self.hdc.get_views(self.output_dir)
 
     def get_random_port(self):
         """
@@ -871,15 +586,3 @@ class DeviceHM(Device):
             return self.get_random_port()
         self.__used_ports.append(port)
         return port
-
-    def handle_rotation(self):
-        if not self.adapters[self.minicap]:
-            return
-        self.pause_sending_event = True
-        if self.minicap.check_connectivity():
-            self.minicap.disconnect()
-            self.minicap.connect()
-
-        if self.minicap.check_connectivity():
-            print("[CONNECTION] %s is reconnected." % self.minicap.__class__.__name__)
-        self.pause_sending_event = False
