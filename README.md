@@ -68,22 +68,22 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
     bash run_sample.sh
     ```
 
-3. **Setting up `config.ymal`**
+3. **Setting up `config.yml`**
    
    Use the correct param based on your PC operating system.
 
     (Required) `env` is necessary to lanuch HMDroidbot
    ```bash
-   # config.ymal
+   # config.yml
    env: <windows, macOS or Linux>
    ```
 
-    (Optional) You can configure other parameters in the config.yaml file to run Droidbot more conveniently, avoiding the need to specify them via command-line arguments. See ***Run HMDroidbot by yaml configuration*** below.
+    (Optional) You can configure other parameters in the `config.yml` file to run Droidbot more conveniently, avoiding the need to specify them via command-line arguments. See ***Run HMDroidbot by yml configuration*** below.
 
 
 1. **Start HMDroidbot:**
 
-    **:+1: (Recommand) Run HMDroidbot by configuring `config.ymal` file. Here's an example `config.ymal` configuration.**
+    **:+1: (Recommended) Run HMDroidbot by configuring `config.yml` file. Here's an example `config.yml` configuration.**
     ```bash
     # env: the system of your PC (e.g. windows, macOS, Linux)
     env: macOS
