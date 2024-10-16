@@ -499,13 +499,14 @@ class DeviceHM(Device):
         self.logger.debug("getting current device state...")
         current_state = None
         try:
-            views = self.get_views()
             foreground_activity = self.get_top_activity_name()
             # activity_stack = self.get_current_activity_stack()
             activity_stack = [foreground_activity]      # TODO Need to get the stack
             # background_services = self.get_service_names()
             screenshot_path = self.take_screenshot()
             self.logger.debug("finish getting current device state...")
+            # if there's no foreground activities (In home or lock screen)
+            views = self.get_views() if foreground_activity is not None else []
             from .device_state import DeviceState
             current_state = DeviceState(self,
                                         views=views,
@@ -558,16 +559,16 @@ class DeviceHM(Device):
         pass
         # self.adb.shell("reboot -p")
 
-    def get_views(self):
-        if self.hdc:
-            views = self.get_views()
-            if views:
-                return views
-            else:
-                self.logger.warning("Failed to get views using HDC.")
+    # def get_views(self):
+    #     if self.hdc:
+    #         views = self.get_views()
+    #         if views:
+    #             return views
+    #         else:
+    #             self.logger.warning("Failed to get views using HDC.")
 
-        self.logger.warning("failed to get current views!")
-        return None
+    #     self.logger.warning("failed to get current views!")
+    #     return None
 
     def get_views(self):
         return self.hdc.get_views(self.output_dir)

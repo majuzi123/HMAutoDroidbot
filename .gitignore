@@ -67,5 +67,7 @@ venv
 # testing scripts
 *.json
 *.py
+*.txt
+*.hap
 output
 apk

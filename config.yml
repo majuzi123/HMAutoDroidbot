@@ -1,0 +1,10 @@
+# env: the system of your PC (e.g. windows, macOS, Linux)
+env: Linux
+
+# system: the target harmonyOS
+system: harmonyOS
+
+# device: <device serial>
+# output_dir: <output path>
+# apk_path: target .hap file (absolute path)
+# count: <number of events to input>

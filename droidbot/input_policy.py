@@ -2,6 +2,7 @@ import sys
 import json
 import logging
 import random
+import time
 from abc import abstractmethod
 
 from .input_event import InputEvent, KeyEvent, IntentEvent, TouchEvent, ManualEvent, SetTextEvent, KillAppEvent
@@ -61,6 +62,8 @@ class InputPolicy(object):
         self.action_count = 0
         self.master = None
 
+        self.cache_time = time.perf_counter()
+
     def start(self, input_manager:"InputManager"):
         """
         start producing events
@@ -80,6 +83,9 @@ class InputPolicy(object):
                 else:
                     event = self.generate_event()
                 input_manager.add_event(event)
+
+                self.logger.info("Cost time {:3f}s".format((current_time := time.perf_counter()) - self.cache_time))
+                self.cache_time = current_time
             except KeyboardInterrupt:
                 break
             except InputInterruptedException as e:

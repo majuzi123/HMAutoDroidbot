@@ -22,14 +22,22 @@ class DeviceState(object):
             tag = datetime.now().strftime("%Y-%m-%d_%H%M%S")
         self.tag = tag
         self.screenshot_path = screenshot_path
-        self.views = self.__parse_views(views)
-        self.view_tree = {}
-        self.__assemble_view_tree(self.view_tree, self.views)
-        self.__generate_view_strs()
-        self.state_str = self.__get_state_str()
-        self.structure_str = self.__get_content_free_state_str()
-        self.search_content = self.__get_search_content()
-        self.text_representation = self.get_text_representation()
+        if foreground_activity is not None:
+            self.views = self.__parse_views(views)
+            self.view_tree = {}
+            self.__assemble_view_tree(self.view_tree, self.views)
+            self.__generate_view_strs()
+            self.state_str = self.__get_state_str()
+            self.structure_str = self.__get_content_free_state_str()
+            self.search_content = self.__get_search_content()
+            self.text_representation = self.get_text_representation()
+        else:
+            self.views = []
+            self.view_tree = {}
+            self.state_str = "home_page_or_lock_screen"
+            self.structure_str = "home_page_or_lock_screen"
+            self.search_content = "home_page_or_lock_screen"
+            self.text_representation = "home_page_or_lock_screen"
         self.possible_events = None
         self.width = device.get_width(refresh=True)
         self.height = device.get_height(refresh=False)

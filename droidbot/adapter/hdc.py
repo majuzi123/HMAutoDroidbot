@@ -7,17 +7,23 @@ import time
 import os
 import pathlib
 import typing
+import time
 try:
     from shlex import quote # Python 3
 except ImportError:
     from pipes import quote # Python 2
 from abc import abstractmethod, ABC
 
+import yaml
+with open(os.path.join(os.getcwd(), "config.yml")) as fp:
+    config_dir = yaml.safe_load(fp)
 
-# ! Use the correct SYSTEM variable according to your system
-# SYSTEM = "Linux" 
-SYSTEM = "windows"
-
+    if config_dir["env"].lower() in ["mac", "macos", "linux", "unix"]:
+        SYSTEM = "Linux"
+    elif config_dir["env"].lower() in ["win", "windows"]:
+        SYSTEM = "windows"
+    else:
+        raise f"No support for system {config_dir['env']}"
 
 if SYSTEM == "windows":
     HDC_EXEC = "hdc.exe"
@@ -34,7 +40,7 @@ class HDCException(Exception):
 class Dumper(ABC):
 
     @abstractmethod
-    def get_views(self):
+    def preprocess_views(self):
         pass
 
 class HDC(Adapter):
@@ -322,24 +328,55 @@ class HDC(Adapter):
         
     def get_views(self, output_dir):
 
-        # dumper = HiDumper(hdc=self)
+        #* Use hidumper to get views
+        dumper = HiDumper(hdc=self)
+        views = dumper.hierachy
 
-        dumper = UitestDumper(hdc=self, output_dir=output_dir)
-        return dumper.views
+        #* use uitest dumper to get views
+        # dumper = UitestDumper(hdc=self, output_dir=output_dir)
+        # views = dumper.get_views()
+
+        return views
 
 class HiDumper(Dumper):
 
+    def print_time_cost(self, info):
+        current_time = time.perf_counter()
+        print(f"{info} cost time {current_time - self.cached_time:4f}s")
+        self.cached_time = current_time
+
     def __init__(self, hdc:HDC):
+
+        """
+        process the stdout to get the raw hierachy
+        """
+        self.indent_cache = -1
+        self.windowInfo = dict()
+        self._hierachy:list[dict] = list()
+
         self.hdc = hdc
         focus_window = self.get_focus_window()
+        self.cached_time = time.perf_counter()
+        
+        with open("temp.txt", "w") as fp:
+            cmd = f"{HDC_EXEC} shell hidumper -s WindowManagerService -a '-w {focus_window} -inspector'"
+            subprocess.run(cmd.split(), stdout=fp, stderr=subprocess.PIPE, text=True)  
 
-        r = self.dump_target_window(focus_window)
-        self.dump_layout(fp=iter(r.splitlines(keepends=True)))
+        # print(f"txt size is {os.path.getsize('temp.txt')}")
+        # self.print_time_cost("hidumper to txt")
+
+        with open("temp.txt", "r") as fp:
+            self.dump_layout(fp)
+
+        # self.print_time_cost("read txt")
 
         self.adapt_hierachy()
 
-    def dump_target_window(self, focus_window):
-        return self.hdc.run_cmd(f"hdc shell hidumper -s WindowManagerService -a '-w {focus_window} -inspector'")
+        # self.print_time_cost("adapt hierachy")
+
+    def dump_target_window_to_file(self, focus_window, fp:typing.IO):
+        cmd = ["hdc", "shell", "hidumper", "-s", "WindowManagerService", "-a", f"'-w {focus_window} -inspector'"]
+        subprocess.run(cmd, stdout=fp, stderr=subprocess.STDOUT)
 
     def get_focus_window(self):
         r = self.hdc.run_cmd(r"hdc shell hidumper -s WindowManagerService -a '-a'")
@@ -352,15 +389,8 @@ class HiDumper(Dumper):
         else:
             raise HDCException("Error when getting focus_window")
     
-    def get_views(self):
-        return "6"
-
-    """
-    process the stdout to get the raw hierachy
-    """
-    indent_cache = -1
-    windowInfo = dict()
-    _hierachy:list[dict] = list()
+    def preprocess_views(self):
+        return self.hierachy
 
     def get_indent(self, line):
         return int((len(line) - len(line.lstrip())) / 2)
@@ -373,7 +403,6 @@ class HiDumper(Dumper):
         while "last vsyncId" not in line:
             key, value = self.get_line_info(line)
             self.windowInfo[key] = value
-
             line = next(fp)
     
     def get_hierachy(self, line:str, fp:typing.Iterable[str]):
@@ -381,22 +410,28 @@ class HiDumper(Dumper):
             raise StopIteration
         
         node_indent = self.get_indent(line)
+        
         node = {"type":line.split()[1],
                 "child_count":int(line.split(":")[-1]),
                 "level": node_indent}
         
-        while "childTree" not in (line := next(fp)):
+        line = next(fp)
+        while "->" not in line and line.strip():
+            # print(line)
             key, value = self.get_line_info(line)
             node[key] = value
-        
+            line = next(fp)
+
         node["children"] = []
         self._hierachy.append(node)
 
         if node_indent > 1:
             for parent in reversed(self._hierachy):
                 if parent["level"] == node_indent - 1:
+                    # print(node)
                     parent["children"].append(node["ID"])
                     break
+        return line
 
 
     def dump_layout(self, fp):
@@ -409,7 +444,8 @@ class HiDumper(Dumper):
 
         while True:
             try:
-                line = next(fp)
+                if not widget_flag:
+                    line = next(fp)
 
                 if "WindowManagerService" in line:
                     begin_flag = True
@@ -424,21 +460,19 @@ class HiDumper(Dumper):
                 if not widget_flag:
                     self.get_window_info(line, fp)
                 else:
-                    self.get_hierachy(line, fp)
+                    line = self.get_hierachy(line, fp)
 
             except StopIteration:
                 # End of file
                 break
         
-        # self.windowInfo
-        # self._hierachy
+        print(f"_hierachy size is {len(self._hierachy)}")
 
         # if logger.level != logging.DEBUG:
         #     return
         # # the following code is for assertion
         # for node in self._hierachy:
-        #     logger.debug(f"checking node {node}")
-        #     assert node["child_count"] == len(node["children"])
+        #     assert node["child_count"] == len(node["children"]), node
 
     """
     proccess the hierachy to adapt it to droidbot style
@@ -446,8 +480,14 @@ class HiDumper(Dumper):
 
     def adapt_hierachy(self):
         self.hierachy = []
-        for _node in self._hierachy:
+        uiextension_children = []
+        id_map = dict()
+
+        for i, _node in enumerate(self._hierachy):
             node = dict()
+            if _node["type"] == "UIExtensionComponent" or _node["ID"] in uiextension_children:
+                uiextension_children.extend(_node["children"])
+                continue
             for key, value in _node.items():
                 if key in ["visible", "clickable", "checkable", "scrollable", "checked"]:
                     node[key] = bool(int(value))
@@ -456,20 +496,32 @@ class HiDumper(Dumper):
                     node["long_clickable"] = bool(int(value))
                     continue
                 if key == "ID":
-                    node["accessibilityId"] = int(value)
-                    node["temp_id"] = int(value)
+                    node["accessibilityId"] = (old_id := int(value))
+                    node["temp_id"] = i
+                    id_map[old_id] = i
                     continue
                 if key == "children":
                     node[key] = [int(_) for _ in value]
                     continue
-
+                if key == "type":
+                    node["class"] = value
+            
             # proccess the bounds
             top, left, width, height = [int(float(_node["top"])), int(float(_node["left"])),
                                         int(float(_node["width"])), int(float(_node["height"]))]
             node["bounds"] = [[left, top], [left+width, top+height]]
             node["size"] = f"{width}*{height}"
 
+            #! TODO hidumper抓下来的控件没有enabled信息，这里先默认为True，日后若接口改变需更改
+            node["enabled"] = True
+
             self.hierachy.append(node)
+        
+        for _node in self.hierachy:
+            for old_id, new_id in id_map.items():
+                if old_id in _node["children"]:
+                    _node["children"].remove(old_id)
+                    _node["children"].append(new_id)
         
         self.hierachy
 
@@ -498,7 +550,7 @@ class UitestDumper(Dumper):
         remote_path = r.split(":")[-1]
         return remote_path
     
-    def get_views(self, views_path):
+    def preprocess_views(self, views_path):
         """
         bfs the view tree and turn it into the android style
         views list
@@ -619,4 +671,7 @@ class UitestDumper(Dumper):
 
             self.hdc.pull_file(remote_path, HDC.get_relative_path(local_path))
 
-            return self.get_views(local_path)
+            return self.preprocess_views(local_path)
+
+    def get_views(self):
+        return self.views

@@ -1,11 +1,13 @@
 # helper file of droidbot
 # it parses command arguments and send the options to droidbot
 import argparse
+import os
 from . import input_manager
 from . import input_policy
 from . import env_manager
 from .droidbot import DroidBot
 from .droidmaster import DroidMaster
+import yaml
 import logging
 logger = logging.getLogger(__name__)
 
@@ -18,7 +20,7 @@ def parse_args():
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-d","-t", action="store", dest="device_serial", required=False,
                         help="The serial number of target device (use `adb devices` to find Android device and `hdc list targets` to find HarmonyOS device)")
-    parser.add_argument("-a", action="store", dest="apk_path", required=True,
+    parser.add_argument("-a", action="store", dest="apk_path", required=False,
                         help="The file path to target APK")
     parser.add_argument("-o", action="store", dest="output_dir",
                         help="directory of output")
@@ -98,14 +100,31 @@ def parse_args():
     # print options
     return options
 
-
 def main():
     """
     the main function
     it starts a droidbot according to the arguments given in cmd line
-    """
+    """   
     opts = parse_args()
-    import os
+
+    with open(os.path.join(os.getcwd(), "config.yml"), "r") as fp:
+        config_dir:dict[str, str] = yaml.safe_load(fp)
+    for key, value in config_dir.items():
+        if key.lower() == "system" and value:
+            opts.is_harmonyos = value.lower() == "harmonyos"
+        elif key.lower() == "apk_path" and value:
+            opts.apk_path = value
+        elif key.lower() == "policy" and value:
+            opts.input_policy = value
+        elif key.lower() == "output_dir" and value:
+            opts.output_dir = value
+        elif key.lower() == "count" and value:
+            opts.count = value
+        elif key.lower() in ["target", "device", "device_serial"] and value:
+            opts.device_serial = value
+
+    if not hasattr(opts, "apk_path"):
+        logger.error("App package not provided")
     if not os.path.exists(opts.apk_path):
         logger.error("App does not exist.")
         return
