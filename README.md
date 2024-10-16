@@ -68,19 +68,46 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
     bash run_sample.sh
     ```
 
-2. **Start HMDroidbot:**
+3. **Setting up `config.ymal`**
+   
+   Use the correct param based on your PC operating system.
 
-    Run droidbot by `python -m`.
+    (Required) `env` is necessary to lanuch HMDroidbot
+   ```bash
+   # config.ymal
+   env: <windows, macOS or Linux>
+   ```
+
+    (Optional) You can configure other parameters in the config.yaml file to run Droidbot more conveniently, avoiding the need to specify them via command-line arguments. See ***Run HMDroidbot by yaml configuration*** below.
+
+
+1. **Start HMDroidbot:**
+
+    **:+1: (Recommand) Run HMDroidbot by configuring `config.ymal` file. Here's an example `config.ymal` configuration.**
+    ```bash
+    # env: the system of your PC (e.g. windows, macOS, Linux)
+    env: macOS
+
+    # system: the target harmonyOS
+    system: harmonyOS
+
+    device: 23E**********1843
+    output_dir: output
+    apk_path: <absolute_path_to_hap>
+    count: 1000
+    ```
+
+    Then, simply run `droidbot` or `python -m droidbot.start` to start.
+
+    **Run HMDroidbot by `python -m`**
     ```bash
     python3 -m droidbot.start -a <absolute_path_to_hap> -o output_dir -is_harmonyos
     ```
     
-    Run droidbot by `droidbot`
+    **Run HMDroidbot by `droidbot`**
     ```bash
     droidbot -a <absolute_path_to_hap> -o output_dir -is_harmonyos
     ```
-
-
     
     > Attention! -a is used to specify the path to hap, please use absolute path here!
     That's it! You will find much useful information, including the UTG, generated in the output dir.
@@ -106,10 +133,6 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
 
     
 ## Trouble shooting
-You should use the correct `SYSTEM` variable in `droidbot/adapter/hdc.py`.
-
-<img width="687" alt="image" src="https://github.com/user-attachments/assets/b8de8da9-7d95-4e1e-b032-8cb5a5b00bc3">
-
 We used WSL to develop this project. so the hdc tool we used in this project is actually `hdc.exe` by adding `/mnt/.../hdc.exe` on windows to the WSL PATH.
 
 Due to HarmonyOS NEXT being in beta, the process of configuring the hdc environment is somewhat complex (especially on WSL). The overall idea for WSL configuration is to install the hdc tool on the host system and export the `hdc.exe` from the host system path through the WSL `mnt` path (since the phone is connected to the host system, this eliminates the need to configure USB port forwarding). If you encounter any issues while setting up the environment, please feel free to contact us.

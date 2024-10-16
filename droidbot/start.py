@@ -106,8 +106,12 @@ def main():
     it starts a droidbot according to the arguments given in cmd line
     """   
     opts = parse_args()
+    
+    if not any(os.path.exists(ymal_path := os.path.join(os.getcwd(), _)) for _ in ["config.yml", "config.ymal"]):
+        logger.error("config.ymal not found")
+        return
 
-    with open(os.path.join(os.getcwd(), "config.yml"), "r") as fp:
+    with open(ymal_path, "r") as fp:
         config_dir:dict[str, str] = yaml.safe_load(fp)
     for key, value in config_dir.items():
         if key.lower() == "system" and value:

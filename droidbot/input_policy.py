@@ -84,7 +84,7 @@ class InputPolicy(object):
                     event = self.generate_event()
                 input_manager.add_event(event)
 
-                self.logger.info("Cost time {:3f}s".format((current_time := time.perf_counter()) - self.cache_time))
+                self.logger.debug("Input event cost time {:3f}s".format((current_time := time.perf_counter()) - self.cache_time))
                 self.cache_time = current_time
             except KeyboardInterrupt:
                 break
