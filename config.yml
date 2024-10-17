@@ -6,5 +6,5 @@ system: harmonyOS
 
 # device: <device serial>
 # output_dir: <output path>
-# apk_path: target .hap file (absolute path)
+# app_path: target .hap file
 # count: <number of events to input>

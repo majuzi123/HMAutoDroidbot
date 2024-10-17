@@ -9,6 +9,8 @@ HMDroidbot（HM代表HarmonyOS，Droid代表Android）是一个轻量级的测�
 
 :boom: 支持Android和HarmonyOS NEXT设备。使用标志 `-is_harmonyos` 来指定目标系统。
 
+:boom: 支持使用YMAL文件进行配置，简化启动方式。
+
 :boom: 源代码改进。更易于阅读和调试。为源代码添加了类型注解并对日志进行了上色。使用 `-debug` 标志将调试级别日志打印到终端！
 
 :boom: 使用 `-log` 标志从设备获取hilog。请在报告目录中查看！
@@ -58,26 +60,54 @@ HMDroidbot（HM代表HarmonyOS，Droid代表Android）是一个轻量级的测�
         
         :three: 如果安装成功，您应该能够执行 `droidbot -h`。（如果无法运行 `droidbot` 命令，请尝试使用 `python3 -m droidbot.start -h` 代替）。
 
-2. **快速开始（目前仅在WSL中可用）：**
+2. **快速开始（目前仅在WSL中可用，仅支持真机）：**
 
     :wave: 只需运行我们提供的 `run_sample.sh` 文件以下载示例hap包并尝试HMDroidbot！
     ```bash
     bash run_sample.sh
     ```
 
-3. **启动HMDroidbot：**
+3. **配置 `config.yml`**
 
-    通过 `python -m` 运行droidbot。
+    根据你的电脑操作系统使用正确的参数。
+
+    （必选参数）env：你的操作系统。
     ```bash
-    python3 -m droidbot.start -a <hap的绝对路径> -o output_dir -is_harmonyos
+    # config.yml
+    env: <windows, macOS 或 Linux>
+    ```
+
+    （可选参数）你可以在 config.yml 文件中配置其他参数，以便更方便地运行 Droidbot，从而避免通过命令行参数指定它们。请参阅下一小节的YAML配置教程。
+
+4. **启动HMDroidbot：**
+
+    :+1: **（建议方式） 通过配置 `config.yml` 文件启动 HMDroidbot**
+
+    ```bash
+    # env: the system of your PC (e.g. windows, macOS, Linux)
+    env: macOS
+
+    # system: the target harmonyOS
+    system: harmonyOS
+
+    device: 23E**********1843
+    output_dir: output
+    apk_path: <absolute_path_to_hap>
+    count: 1000
+    ```
+
+    然后，运行 `droidbot` 或 `python -m droidbot.start`。
+
+    **通过 `python -m` 运行HMDroidbot**
+    ```bash
+    python3 -m droidbot.start -a <hap的路径> -o output_dir -is_harmonyos
     ```
     
-    通过 `droidbot` 运行droidbot。
+    **通过 `droidbot` 运行HMDroidbot**
     ```bash
-    droidbot -a <hap的绝对路径> -o output_dir -is_harmonyos
+    droidbot -a <hap的路径> -o output_dir -is_harmonyos
     ```
 
-    > 注意！-a 用于指定hap的路径，请在这里使用绝对路径！相对路径暂不支持。
     测试开始后，您将在输出目录中实时找到许多有用的信息，包括生成的UTG。
 
     + 如果您使用多个设备，您可能需要使用 `-t <device_serial>` 来指定目标设备。确定设备序列号的最简单方法是调用 `hdc list targets`。
@@ -88,11 +118,11 @@ HMDroidbot（HM代表HarmonyOS，Droid代表Android）是一个轻量级的测�
     **示例启动脚本**
     ```bash
     # 通过droidbot命令启动
-    droidbot -a <hap的绝对路径> -o output -t 23E**********1843 -count 1000 -is_harmonyos -debug
+    droidbot -a app/sample.hap -o output -t 23E**********1843 -count 1000 -is_harmonyos -debug
 
     # 通过运行模块启动。易于调试！
     # 在HMDroidbot目录中执行以下命令。
-    python -m droidbot.start -a <hap的绝对路径> -o output -t 23E**********1843 -count 1000 -is_harmonyos -debug
+    python -m droidbot.start -a app/sample.hap -o output -t 23E**********1843 -count 1000 -is_harmonyos -debug
     ```
 
     **vscode `launch.json` 文件示例**
@@ -101,10 +131,6 @@ HMDroidbot（HM代表HarmonyOS，Droid代表Android）是一个轻量级的测�
 
     
 ## 故障排除
-您应该在 `droidbot/adapter/hdc.py` 中使用正确的 `SYSTEM` 变量。
-
-<img width="687" alt="image" src="https://github.com/user-attachments/assets/b8de8da9-7d95-4e1e-b032-8cb5a5b00bc3">
-
 我们使用WSL开发该项目，因此我们在此项目中使用的hdc工具实际上是通过在Windows上添加 `/mnt/.../hdc.exe` 到WSL路径的 `hdc.exe`。
 
 由于HarmonyOS NEXT处于测试版，配置hdc环境的过程有点复杂（尤其在WSL上）。WSL的配置总体思路是将hdc工具装在主系统，并从WSL的`mnt`路径下将主系统路径下的`hdc.exe` export出去（因为手机连在主系统上，这样做不用再配置USB口的转发），如果您在配置环境时遇到任何问题，请随时与我联系。

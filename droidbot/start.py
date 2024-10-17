@@ -7,7 +7,7 @@ from . import input_policy
 from . import env_manager
 from .droidbot import DroidBot
 from .droidmaster import DroidMaster
-import yaml
+from .utils import get_yml_config
 import logging
 logger = logging.getLogger(__name__)
 
@@ -107,16 +107,11 @@ def main():
     """   
     opts = parse_args()
     
-    if not any(os.path.exists(ymal_path := os.path.join(os.getcwd(), _)) for _ in ["config.yml", "config.ymal"]):
-        logger.error("config.ymal not found")
-        return
-
-    with open(ymal_path, "r") as fp:
-        config_dir:dict[str, str] = yaml.safe_load(fp)
-    for key, value in config_dir.items():
+    config_dict = get_yml_config()
+    for key, value in config_dict.items():
         if key.lower() == "system" and value:
             opts.is_harmonyos = value.lower() == "harmonyos"
-        elif key.lower() == "apk_path" and value:
+        elif key.lower() == "app_path" and value:
             opts.apk_path = value
         elif key.lower() == "policy" and value:
             opts.input_policy = value
@@ -129,8 +124,10 @@ def main():
 
     if not hasattr(opts, "apk_path"):
         logger.error("App package not provided")
+    if os.getcwd() not in opts.apk_path:
+        opts.apk_path = os.path.join(os.getcwd(), opts.apk_path)
     if not os.path.exists(opts.apk_path):
-        logger.error("App does not exist.")
+        logger.error(f"App '{opts.apk_path}' does not exist.")
         return
     if not opts.output_dir and opts.cv_mode:
         logger.error("To run in CV mode, you need to specify an output dir (using -o option).")

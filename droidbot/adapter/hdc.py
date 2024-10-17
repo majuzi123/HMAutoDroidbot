@@ -8,22 +8,22 @@ import os
 import pathlib
 import typing
 import time
+from ..utils import get_yml_config
 try:
     from shlex import quote # Python 3
 except ImportError:
     from pipes import quote # Python 2
 from abc import abstractmethod, ABC
 
-import yaml
-with open(os.path.join(os.getcwd(), "config.yml")) as fp:
-    config_dir = yaml.safe_load(fp)
 
-    if config_dir["env"].lower() in ["mac", "macos", "linux", "unix"]:
-        SYSTEM = "Linux"
-    elif config_dir["env"].lower() in ["win", "windows"]:
-        SYSTEM = "windows"
-    else:
-        raise f"No support for system {config_dir['env']}"
+config_dir = get_yml_config()
+
+if config_dir["env"].lower() in ["mac", "macos", "linux", "unix"]:
+    SYSTEM = "Linux"
+elif config_dir["env"].lower() in ["win", "windows"]:
+    SYSTEM = "windows"
+else:
+    raise f"No support for system {config_dir['env']}"
 
 if SYSTEM == "windows":
     HDC_EXEC = "hdc.exe"
@@ -466,7 +466,7 @@ class HiDumper(Dumper):
                 # End of file
                 break
         
-        print(f"_hierachy size is {len(self._hierachy)}")
+        # print(f"_hierachy size is {len(self._hierachy)}")
 
         # if logger.level != logging.DEBUG:
         #     return

@@ -12,6 +12,8 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
 
 :boom: Support both Android and HarmonyOS NEXT devices. Use the flag `-is_harmonyos` to specify the target system.
 
+:boom: Support configuring with YAML file. Easy to get start with.
+
 :boom: Source code improvement. Easier to read and debug. Added typing to the source code and colorized the log. Use `-debug` flag to print the debug level log to the terminal!
 
 :boom: Use `-log` flag to get the hilog from the device. Check it in the report directory!
@@ -72,13 +74,13 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
    
    Use the correct param based on your PC operating system.
 
-    (Required) `env` is necessary to lanuch HMDroidbot
+    **(Required)** `env` is necessary to lanuch HMDroidbot
    ```bash
    # config.yml
    env: <windows, macOS or Linux>
    ```
 
-    (Optional) You can configure other parameters in the `config.yml` file to run Droidbot more conveniently, avoiding the need to specify them via command-line arguments. See ***Run HMDroidbot by yml configuration*** below.
+    **(Optional)** You can configure other parameters in the `config.yml` file to run Droidbot more conveniently, avoiding the need to specify them via command-line arguments. See ***Run HMDroidbot by yml configuration*** below.
 
 
 1. **Start HMDroidbot:**
@@ -93,7 +95,7 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
 
     device: 23E**********1843
     output_dir: output
-    apk_path: <absolute_path_to_hap>
+    app_path: app/sample.hap
     count: 1000
     ```
 
@@ -101,15 +103,14 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
 
     **Run HMDroidbot by `python -m`**
     ```bash
-    python3 -m droidbot.start -a <absolute_path_to_hap> -o output_dir -is_harmonyos
+    python3 -m droidbot.start -a <path_to_hap> -o output_dir -is_harmonyos
     ```
     
     **Run HMDroidbot by `droidbot`**
     ```bash
-    droidbot -a <absolute_path_to_hap> -o output_dir -is_harmonyos
+    droidbot -a <path_to_hap> -o output_dir -is_harmonyos
     ```
     
-    > Attention! -a is used to specify the path to hap, please use absolute path here!
     That's it! You will find much useful information, including the UTG, generated in the output dir.
 
     + If you are using multiple devices, you may need to use `-t <device_serial>` to specify the target device. The easiest way to determine a device's serial number is calling `hdc list targets`.
@@ -120,11 +121,11 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
     **Example Starting Scripts**
     ```bash
     # Start by droidbot cmd
-    droidbot -a <absolute_path_to_hap> -o output -t 23E**********1843 -count 1000 -is_harmonyos -debug
+    droidbot -a app/sample.hap -o output -t 23E**********1843 -count 1000 -is_harmonyos -debug
 
     # Start by running module. Easy to debug!
     # execute the following command in the HMDroidbot dir, which should include the setup.py.
-    python -m droidbot.start -a <absolute_path_to_hap> -o output -t 23E**********1843 -count 1000 -is_harmonyos -debug
+    python -m droidbot.start -a app/sample.hap -o output -t 23E**********1843 -count 1000 -is_harmonyos -debug
     ```
 
     **vscode `launch.json` example**
