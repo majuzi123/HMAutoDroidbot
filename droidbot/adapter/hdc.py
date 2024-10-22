@@ -106,8 +106,8 @@ class HDC(Adapter):
             self.logger.warning(msg)
             raise HDCException(msg)
 
-        args = [HDC_EXEC]
-        # args = [] + self.cmd_prefix    TODO 写到有设备号的时候用这一行
+        # args = [HDC_EXEC]
+        args = [] + self.cmd_prefix
         args += extra_args
 
         self.logger.debug('Runing command:')
@@ -126,6 +126,9 @@ class HDC(Adapter):
         @param extra_args:
         @return: output of hdc shell command
         """
+
+        
+
         if isinstance(extra_args, str):
             extra_args = extra_args.split()
         if not isinstance(extra_args, list):
@@ -357,15 +360,17 @@ class HiDumper(Dumper):
         self.hdc = hdc
         focus_window = self.get_focus_window()
         self.cached_time = time.perf_counter()
+
+        temp_path = os.path.join(hdc.device.output_dir, "temp.txt")
         
-        with open("temp.txt", "w") as fp:
-            cmd = f"{HDC_EXEC} shell hidumper -s WindowManagerService -a '-w {focus_window} -inspector'"
+        with open(temp_path, "w") as fp:
+            cmd = f"{HDC_EXEC} -t {self.hdc.device.serial} shell hidumper -s WindowManagerService -a '-w {focus_window} -inspector'"
             subprocess.run(cmd.split(), stdout=fp, stderr=subprocess.PIPE, text=True)  
 
         # print(f"txt size is {os.path.getsize('temp.txt')}")
         # self.print_time_cost("hidumper to txt")
 
-        with open("temp.txt", "r") as fp:
+        with open(temp_path, "r") as fp:
             self.dump_layout(fp)
 
         # self.print_time_cost("read txt")
@@ -375,11 +380,11 @@ class HiDumper(Dumper):
         # self.print_time_cost("adapt hierachy")
 
     def dump_target_window_to_file(self, focus_window, fp:typing.IO):
-        cmd = ["hdc", "shell", "hidumper", "-s", "WindowManagerService", "-a", f"'-w {focus_window} -inspector'"]
+        cmd = [HDC_EXEC, "-t", self.hdc.device.serial, "shell", "hidumper", "-s", "WindowManagerService", "-a", f"'-w {focus_window} -inspector'"]
         subprocess.run(cmd, stdout=fp, stderr=subprocess.STDOUT)
 
     def get_focus_window(self):
-        r = self.hdc.run_cmd(r"hdc shell hidumper -s WindowManagerService -a '-a'")
+        r = self.hdc.run_cmd(f"{HDC_EXEC} -t {self.hdc.device.serial} shell hidumper -s WindowManagerService -a '-a'")
 
         match = re.search(r'Focus window:\s*(\d+)', r)
 
