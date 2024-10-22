@@ -114,6 +114,7 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
     That's it! You will find much useful information, including the UTG, generated in the output dir.
 
     + If you are using multiple devices, you may need to use `-t <device_serial>` to specify the target device. The easiest way to determine a device's serial number is calling `hdc list targets`.
+    + If you use an emulator, there is no serial number. When using the **hdc list targets** command, you should receive a local loopback address IP and port: 127.0.0.1:5555. You may need to use ` - t 127.0.0.1:5555 ` to specify the target device. (The emulator needs to be configured in the Deveco Studio development tool of HarmonyOS. Please refer to the specific configuration tutorial< https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V5/ide-emulator-create-V5 >)
     + You may find the `-debug` tag useful while you are trying to debug the source code.
     + Use `-log` flag to get the hilog in HarmonyOS, which can be found in the report directory.
     + You may find other useful features in `droidbot -h`.
@@ -126,6 +127,9 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
     # Start by running module. Easy to debug!
     # execute the following command in the HMDroidbot dir, which should include the setup.py.
     python -m droidbot.start -a app/sample.hap -o output -t 23E**********1843 -count 1000 -is_harmonyos -debug
+   
+    # If you are using an emulator, execute the following command:
+   python -m droidbot.start -a <absolute_path_to_hap> -o output -t 127.0.0.1:5555 -count 1000 -is_harmonyos -debug
     ```
 
     **vscode `launch.json` example**
