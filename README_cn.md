@@ -111,6 +111,8 @@ HMDroidbot（HM代表HarmonyOS，Droid代表Android）是一个轻量级的测�
     测试开始后，您将在输出目录中实时找到许多有用的信息，包括生成的UTG。
 
     + 如果您使用多个设备，您可能需要使用 `-t <device_serial>` 来指定目标设备。确定设备序列号的最简单方法是调用 `hdc list targets`。
+    + 如果您使用模拟器，使用hdc list targets命令时应该得到的是一个本地回环地址ip和端口：127.0.0.1:5555，您
+      需要使用 `-t 127.0.0.1:5555` 来指定目标设备。（模拟器需要在鸿蒙开发工具Deveco Studio中配置，具体配置参考[官方教程](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V5/ide-emulator-create-V5)）
     + 在调试源代码时， `-debug` 很有用。
     + 使用 `-log` 标志获取HarmonyOS中的hilog，可以在报告目录中找到这个文件。
     + 您可以在 `droidbot -h` 中找到其他有用的功能。

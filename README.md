@@ -114,6 +114,7 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
     That's it! You will find much useful information, including the UTG, generated in the output dir.
 
     + If you are using multiple devices, you may need to use `-t <device_serial>` to specify the target device. The easiest way to determine a device's serial number is calling `hdc list targets`.
+    + If you use an emulator. You can use the **hdc list targets** command to figure out a local loopback address IP and port like 127.0.0.1:5555. You may use ` - t 127.0.0.1:5555 ` to specify the target emulator. (The emulator needs to be configured in the Deveco Studio development tool of HarmonyOS. Please refer to the [configuration tutorial](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V5/ide-emulator-create-V5))
     + You may find the `-debug` tag useful while you are trying to debug the source code.
     + Use `-log` flag to get the hilog in HarmonyOS, which can be found in the report directory.
     + You may find other useful features in `droidbot -h`.
