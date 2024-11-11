@@ -20,7 +20,7 @@ It can send random or scripted input events to test an HarmonyOS app, achieve hi
 
 ## Prerequisite
 
-1. `Python 3.10+`
+1. `Python 3.10 ~ 3.11` Some required official package has been removed in 3.13. For stable usage, 3.11 is recommended.
 2. `HDC cmdtool 3.1.0a+`
 
 ## How to use
