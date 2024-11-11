@@ -307,12 +307,15 @@ class HDC(Adapter):
         return the relative path in win style
         """
         workspace = pathlib.Path(os.getcwd())
-
-        if SYSTEM == "windows":
-            relative_path = pathlib.PureWindowsPath(pathlib.Path(absolute_path).relative_to(workspace))
-            return relative_path
-        elif SYSTEM == "Linux":
-            return pathlib.Path(absolute_path).relative_to(workspace)
+        try:
+            if SYSTEM == "windows":
+                relative_path = pathlib.PureWindowsPath(pathlib.Path(absolute_path).relative_to(workspace))
+                return relative_path
+            elif SYSTEM == "Linux":
+                return pathlib.Path(absolute_path).relative_to(workspace)
+        except ValueError:
+            # When app path is not the subpath of workspace, return itself.
+            return absolute_path
     
     def push_file(self, local_file, remote_dir="/sdcard/"):
         """
