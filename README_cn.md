@@ -17,7 +17,7 @@ HMDroidbot（HM代表HarmonyOS，Droid代表Android）是一个轻量级的测�
 
 ## 前提条件
 
-1. `Python 3.10+`
+1. `Python 3.10 ~ 3.11` 一些必要的官方库在3.13中被移除了，为了稳定的运行，推荐使用3.11。
 2. `HDC cmdtool 3.1.0a+`
 
 ## 使用方法
