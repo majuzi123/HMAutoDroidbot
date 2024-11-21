@@ -691,5 +691,180 @@ class DeviceState(object):
         merged_desc = '<br>'.join(content_descriptions) if len(content_descriptions) > 0 else ''
         return merged_text, merged_desc
 
+    def get_scrollable_views(self):
+        scrollable_views = []
+        enabled_view_ids = []
+        for view_dict in self.views:
+            # exclude navigation bar if exists
+            if self.__safe_dict_get(view_dict, 'visible') and \
+                    self.__safe_dict_get(view_dict, 'resource_id') not in \
+                    ['android:id/navigationBarBackground',
+                     'android:id/statusBarBackground']:
+                enabled_view_ids.append(view_dict['temp_id'])
+        for view_id in enabled_view_ids:
+            view = self.views[view_id]
+            scrollable = self.__safe_dict_get(view, 'scrollable')
+
+            clickable = self._get_self_ancestors_property(view, 'clickable')
+            scrollable = self.__safe_dict_get(view, 'scrollable')
+            checkable = self._get_self_ancestors_property(view, 'checkable')
+            long_clickable = self._get_self_ancestors_property(view, 'long_clickable')
+            editable = self.__safe_dict_get(view, 'editable')
+
+            if scrollable and not clickable and not checkable and not long_clickable and not editable:
+                scrollable_views.append(view)
+        return scrollable_views
+
+    def get_described_actions(self, prefix='', remove_time_and_ip=False,
+                              merge_buttons=True, add_edit_box=True, add_check_box=True, add_pure_text=True):
+        """
+        Get a text description of current state
+        """
+        enabled_view_ids = []
+        for view_dict in self.views:
+            # exclude navigation bar if exists
+            if self.__safe_dict_get(view_dict, 'visible') and \
+                    self.__safe_dict_get(view_dict, 'resource_id') not in \
+                    ['android:id/navigationBarBackground',
+                     'android:id/statusBarBackground']:
+                enabled_view_ids.append(view_dict['temp_id'])
+
+        text_frame = "<p id=@ text='&'>#</p>"
+        btn_frame = "<button id=@ text='&'>#</button>"
+        checkbox_frame = "<checkbox id=@ checked=$ text='&'>#</checkbox>"
+        input_frame = "<input id=@ text='&'>#</input>"
+        scroll_down_frame = "<div id=@ class='scroller'>scroll down</div>"
+        scroll_up_frame = "<div id=@ class='scroller'>scroll up</div>"
+
+        view_descs = []
+        available_actions = []
+        removed_view_ids = []
+
+        important_view_ids = []
+
+        for view_id in enabled_view_ids:
+            if view_id in removed_view_ids:
+                continue
+            # print(view_id)
+            view = self.views[view_id]
+            clickable = self._get_self_ancestors_property(view, 'clickable')
+            scrollable = self.__safe_dict_get(view, 'scrollable')
+            checkable = self._get_self_ancestors_property(view, 'checkable')
+            long_clickable = self._get_self_ancestors_property(view, 'long_clickable')
+            editable = self.__safe_dict_get(view, 'editable')
+            actionable = clickable or scrollable or checkable or long_clickable or editable
+            checked = self.__safe_dict_get(view, 'checked', default=False)
+            selected = self.__safe_dict_get(view, 'selected', default=False)
+            content_description = self.__safe_dict_get(view, 'content_description', default='')
+            view_text = self.__safe_dict_get(view, 'text', default='')
+            view_class = self.__safe_dict_get(view, 'class').split('.')[-1]
+            if not content_description and not view_text and not scrollable:  # actionable?
+                continue
+
+            # text = self._merge_text(view_text, content_description)
+            # view_status = ''
+            if editable:
+                # view_status += 'editable '
+                view_desc = input_frame.replace('@', str(len(view_descs))).replace('#', view_text)
+                if content_description:
+                    view_desc = view_desc.replace('&', content_description)
+                else:
+                    view_desc = view_desc.replace(" text='&'", "")
+                # view_desc = view_desc.replace('*&*', str(view_id))
+                view_descs.append(view_desc)
+                available_actions.append(SetTextEvent(view=view, text='HelloWorld'))
+                important_view_ids.append([content_description + view_text, view_id])
+
+            elif checkable:
+                view_desc = checkbox_frame.replace('@', str(len(view_descs))).replace('#', view_text).replace('$',
+                                                                                                              str(checked or selected))
+                if content_description:
+                    view_desc = view_desc.replace('&', content_description)
+                else:
+                    view_desc = view_desc.replace(" text='&'", "")
+                view_descs.append(view_desc)
+                if add_check_box:
+                    available_actions.append(TouchEvent(view=view))
+                else:
+                    available_actions.append(None)
+                # view_dict_list.append(
+                #     {'id': len(view_descs) - 1, 'text': view_text, 'content_description': content_description,
+                #      'checked': checked or selected, 'type': 'checkbox'})
+            elif clickable:  # or long_clickable
+                if merge_buttons:
+                    # below is to merge buttons, led to bugs
+                    clickable_ancestor_id = self._get_ancestor_id(view=view, key='clickable')
+                    if not clickable_ancestor_id:
+                        clickable_ancestor_id = self._get_ancestor_id(view=view, key='checkable')
+                    # if not clickable_ancestor_id:
+                    #     clickable_ancestor_id = self._get_ancestor_id(view=view, key='long_clickable')
+                    clickable_children_ids = self._extract_all_children(id=clickable_ancestor_id)
+
+                    if view_id not in clickable_children_ids:
+                        clickable_children_ids.append(view_id)
+
+                    view_text, content_description, important_view_ids = self._merge_textv2(clickable_children_ids,
+                                                                                            remove_time_and_ip,
+                                                                                            important_view_ids)
+                    checked = self._get_children_checked(clickable_children_ids)
+                    # end of merging buttons
+                if not view_text and not content_description:
+                    continue
+                view_desc = btn_frame.replace('@', str(len(view_descs))).replace('#', view_text)
+                if content_description:
+                    view_desc = view_desc.replace('&', content_description)
+                else:
+                    view_desc = view_desc.replace(" text='&'", "")
+                view_descs.append(view_desc)
+
+                available_actions.append(TouchEvent(view=view))
+                # if view_id == 111:
+                #     pdb.set_trace()
+                if merge_buttons:
+                    for clickable_child in clickable_children_ids:
+                        if clickable_child in enabled_view_ids and clickable_child != view_id:
+                            removed_view_ids.append(clickable_child)
+
+                # view_dict_list.append(
+                #     {'id': len(view_descs) - 1, 'text': view_text, 'content_description': content_description,
+                #      'type': 'button'})
+
+
+            elif scrollable:
+                # print(view_id, 'continued')
+                continue
+                # view_descs.append(scroll_up_frame.replace('@', str(len(view_descs))))#.replace('&', view_class).replace('#', text))
+                # available_actions.append(ScrollEvent(view=view, direction='UP'))
+                # view_descs.append(scroll_down_frame.replace('@', str(len(view_descs))))#.replace('&', view_class).replace('#', text))
+                # available_actions.append(ScrollEvent(view=view, direction='DOWN'))
+            else:
+
+                if remove_time_and_ip:
+                    view_text = self._remove_ip_and_date(view_text)
+                    content_description = self._remove_ip_and_date(content_description)
+
+                view_desc = text_frame.replace('@', str(len(view_descs))).replace('#', view_text)
+
+                if content_description:
+                    view_desc = view_desc.replace('&', content_description)
+                else:
+                    view_desc = view_desc.replace(" text='&'", "")
+                view_descs.append(view_desc)
+
+                important_view_ids.append([content_description + view_text, view_id])
+
+                available_actions.append(TouchEvent(view=view))
+        view_descs.append(f"<button id={len(view_descs)}>go back</button>")
+        available_actions.append(KeyEvent(name='BACK'))
+        # state_desc = 'The current state has the following UI elements: \n' #views and corresponding actions, with action id in parentheses:\n '
+        state_desc = prefix  # 'Given a screen, an instruction, predict the id of the UI element to perform the insturction. The screen has the following UI elements: \n'
+        # state_desc = 'You can perform actions on a contacts app, the current state of which has the following UI views and corresponding actions, with action id in parentheses:\n'
+        state_desc += '\n'.join(view_descs)
+
+        views_without_id = self._remove_view_ids(view_descs)
+        # print(views_without_id)
+        return state_desc, available_actions, views_without_id, important_view_ids
+
+
 if __name__ == "__main__":
     print("run")

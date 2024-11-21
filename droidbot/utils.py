@@ -90,7 +90,7 @@ def get_yml_config()->dict[str,str]:
     if not any(os.path.exists(ymal_path := os.path.join(os.getcwd(), _)) for _ in ["config.yml", "config.yaml"]):
         raise "config.yml not found"
 
-    with open(ymal_path, "r") as fp:
+    with open(ymal_path, "r", encoding='utf-8') as fp:
         config_dir:dict[str, str] = yaml.safe_load(fp)
     
     return config_dir

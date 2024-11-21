@@ -4,17 +4,25 @@ import logging
 import random
 import time
 from abc import abstractmethod
+import yaml
+import copy
 
-from .input_event import InputEvent, KeyEvent, IntentEvent, TouchEvent, ManualEvent, SetTextEvent, KillAppEvent
+from .input_event import InputEvent, KeyEvent, IntentEvent, TouchEvent, ManualEvent, SetTextEvent, KillAppEvent, \
+    ScrollEvent
 from .utg import UTG
 
 import typing
 if typing.TYPE_CHECKING:
     from .input_manager import InputManager
-    from .device import Device
+    # from .device import Device
     from .device_hm import DeviceHM
-    from .app import App
+    # from .app import App
     from .app_hm import AppHM
+
+import tools
+import os
+# from query_lmql import prompt_llm_with_history
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # Max number of restarts
 MAX_NUM_RESTARTS = 5
@@ -43,7 +51,16 @@ POLICY_MONKEY = "monkey"
 POLICY_NONE = "none"
 POLICY_MEMORY_GUIDED = "memory_guided"  # implemented in input_policy2
 POLICY_LLM_GUIDED = "llm_guided"  # implemented in input_policy3
+POLICY_TASK = "task"
+FINISHED = "task_completed"
+MAX_SCROLL_NUM = 7
+USE_LMQL = False
 
+def safe_dict_get(view_dict, key, default=None):
+    return_itm = view_dict[key] if (key in view_dict) else default
+    if return_itm == None:
+        return_itm = ''
+    return return_itm
 
 class InputInterruptedException(Exception):
     pass
@@ -64,7 +81,7 @@ class InputPolicy(object):
 
         self.cache_time = time.perf_counter()
 
-    def start(self, input_manager:"InputManager"):
+    def start(self, input_manager):
         """
         start producing events
         :param input_manager: instance of InputManager
@@ -82,6 +99,9 @@ class InputPolicy(object):
                     event = KillAppEvent(app=self.app)
                 else:
                     event = self.generate_event()
+                    print(event)
+                if event == FINISHED:
+                    break
                 input_manager.add_event(event)
 
                 self.logger.debug("Input event cost time {:3f}s".format((current_time := time.perf_counter()) - self.cache_time))
@@ -652,3 +672,535 @@ class ManualPolicy(UtgBasedInputPolicy):
             return IntentEvent(intent=start_app_intent)
         else:
             return ManualEvent()
+
+
+class TaskPolicy(UtgBasedInputPolicy):
+
+    def __init__(self, device, app, random_input, task, use_memory=False, debug_mode=False):
+        super(TaskPolicy, self).__init__(device, app, random_input)
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.task = task
+
+        self.__nav_target = None
+        self.__nav_num_steps = -1
+        self.__num_restarts = 0
+        self.__num_steps_outside = 0
+        self.__event_trace = ""
+        self.__missed_states = set()
+        self.__random_explore = random_input
+        self.__action_history = []
+        self.__thought_history = []
+        self.use_memory = use_memory
+        # if use_memory:
+        #     self.memory = Memory(app_name=self.app.app_name, app_output_path=self.device.output_dir)
+        if self.use_memory:
+            self.similar_ele_path, self.similar_ele_function, self.similar_ele_statement = self.get_most_similar_element()
+            if not self.similar_ele_function:
+                self.use_memory = False
+                print(
+                    '=============\nWarning: Did not find the memory of this app, the app memory is disabled\n=============')
+            else:
+                print(
+                    f'============\nFound element: {self.similar_ele_statement}\nPath: {self.similar_ele_path}\nFunction: {self.similar_ele_function}\n============')
+                self.state_ele_memory = {}  # memorize some important states that contain elements of insight
+
+    def get_most_similar_element(self):
+        from InstructorEmbedding import INSTRUCTOR
+        from sklearn.metrics.pairwise import cosine_similarity
+        import numpy as np
+        model = INSTRUCTOR('hkunlp/instructor-xl')
+        task_embedding = model.encode('task: ' + self.task).reshape(1, -1)
+
+        with open('memory/node_filtered_elements.json') as file:
+            ele_statements = json.load(file)
+        with open('memory/element_description.json') as file:
+            ele_functions = json.load(file)
+        with open('memory/embedded_elements_desc.json') as file:
+            embeddings = json.load(file)
+        app_name = self.device.output_dir.split('/')[-1]
+        if app_name not in embeddings.keys():
+            return None, None, None
+        app_embeddings = embeddings[app_name]
+
+        # similarities = {}
+        max_similarity, similar_ele_idx = -9999, -9999
+        for state_str, elements in app_embeddings.items():
+            # if the target element is in the first ui, no onclick is needed
+            # if ele_statements[app_name][state_str]['path'] == []:
+            #     continue
+            # similarities[state_str] = []
+            for idx, ele in enumerate(elements):
+                if ele:
+                    npele = np.array(ele).reshape(1, -1)
+                    similarity = cosine_similarity(task_embedding, npele)[0][0]
+                else:
+                    similarity = -9999
+                # similarities[state_str].append(similarity)
+                if similarity > max_similarity:
+                    max_similarity = similarity
+                    similar_ele_idx = idx
+                    similar_state_str = state_str
+
+        similar_ele = ele_statements[app_name][similar_state_str]['elements'][similar_ele_idx]
+        similar_ele_path = ele_statements[app_name][similar_state_str]['path']
+        similar_ele_desc = ele_functions[app_name][similar_state_str][similar_ele_idx]
+        del model
+        return similar_ele_path, similar_ele_desc, similar_ele
+
+    def _scroll_to_top(self, scroller, all_views_for_mark, old_state=None):
+        prefix_scroll_event = []
+        if old_state is None:
+            old_state = self.current_state
+        for _ in range(MAX_SCROLL_NUM):  # first scroll up to the top
+            self.device.send_event(ScrollEvent(view=scroller, direction="up"))
+            scrolled_state = self.device.get_current_state()
+            self.utg.add_transition(ScrollEvent(view=scroller, direction="up"), old_state, scrolled_state)
+            old_state = scrolled_state
+            state_prompt, scrolled_candidate_actions, scrolled_views, _ = scrolled_state.get_described_actions()
+            scrolled_new_views = []  # judge whether there is a new view after scrolling
+            for scrolled_view in scrolled_views:
+                if scrolled_view not in all_views_for_mark:
+                    scrolled_new_views.append(scrolled_view)
+                    all_views_for_mark.append(scrolled_view)
+            if len(scrolled_new_views) == 0:
+                break
+
+            prefix_scroll_event.append(ScrollEvent(view=scroller, direction="up"))
+        return prefix_scroll_event
+
+    def generate_event_based_on_utg(self):
+        """
+        generate an event based on current UTG
+        @return: InputEvent
+        """
+        current_state = self.current_state
+        self.logger.info("Current state: %s" % current_state.state_str)
+        if current_state.state_str in self.__missed_states:
+            self.__missed_states.remove(current_state.state_str)
+
+        if current_state.get_app_activity_depth(self.app) < 0:
+            # If the app is not in the activity stack
+            start_app_intent = self.app.get_start_intent()
+
+            # It seems the app stucks at some state, has been
+            # 1) force stopped (START, STOP)
+            #    just start the app again by increasing self.__num_restarts
+            # 2) started at least once and cannot be started (START)
+            #    pass to let viewclient deal with this case
+            # 3) nothing
+            #    a normal start. clear self.__num_restarts.
+
+            if self.__event_trace.endswith(EVENT_FLAG_START_APP + EVENT_FLAG_STOP_APP) \
+                    or self.__event_trace.endswith(EVENT_FLAG_START_APP):
+                self.__num_restarts += 1
+                self.logger.info("The app had been restarted %d times.", self.__num_restarts)
+            else:
+                self.__num_restarts = 0
+
+            # pass (START) through
+            if not self.__event_trace.endswith(EVENT_FLAG_START_APP):
+                if self.__num_restarts > MAX_NUM_RESTARTS:
+                    # If the app had been restarted too many times, enter random mode
+                    msg = "The app had been restarted too many times. Entering random mode."
+                    self.logger.info(msg)
+                    self.__random_explore = True
+                else:
+                    # Start the app
+                    self.__event_trace += EVENT_FLAG_START_APP
+                    self.logger.info("Trying to start the app...")
+                    # self.__action_history = [f'- start the app {self.app.app_name}']
+                    self.__action_history = [f'- launchApp {self.app.app_name}']
+                    self.__thought_history = [f'launch the app {self.app.app_name} to finish the task {self.task}']
+                    return None, IntentEvent(intent=start_app_intent)
+
+        elif current_state.get_app_activity_depth(self.app) > 0:
+            # If the app is in activity stack but is not in foreground
+            self.__num_steps_outside += 1
+
+            if self.__num_steps_outside > MAX_NUM_STEPS_OUTSIDE:
+                # If the app has not been in foreground for too long, try to go back
+                if self.__num_steps_outside > MAX_NUM_STEPS_OUTSIDE_KILL:
+                    stop_app_intent = self.app.get_stop_intent()
+                    go_back_event = IntentEvent(stop_app_intent)
+                else:
+                    go_back_event = KeyEvent(name="BACK")
+                self.__event_trace += EVENT_FLAG_NAVIGATE
+                self.logger.info("Going back to the app...")
+                self.__action_history.append('- go back')
+                self.__thought_history.append('the app has not been in foreground for too long, try to go back')
+                return None, go_back_event
+        else:
+            # If the app is in foreground
+            self.__num_steps_outside = 0
+
+        scrollable_views = current_state.get_scrollable_views()  # self._get_scrollable_views(current_state)
+
+        if len(scrollable_views) > 0:
+            '''
+            if there is at least one scroller in the screen, we scroll each scroller many times until all the screens after scrolling have been recorded, you do not need to read
+            '''
+            # print(scrollable_views)
+
+            actions_dict = {}
+            whole_state_views, whole_state_actions, whole_state_strs = [], [], []
+
+            # state_strs = [current_state.state_str]
+            state_prompt, current_candidate_actions, current_views, _ = current_state.get_described_actions()
+            all_views_for_mark = copy.deepcopy(
+                current_views)  # just for judging whether the screen has been scrolled up to the top
+
+            for scrollerid in range(len(scrollable_views)):
+                scroller = scrollable_views[scrollerid]
+                # prefix_scroll_event = []
+                actions_dict[scrollerid] = []
+
+                prefix_scroll_event = self._scroll_to_top(scroller, all_views_for_mark)
+
+                # after scrolling to the top, update the current_state
+                top_state = self.device.get_current_state()
+                state_prompt, top_candidate_actions, top_views, _ = top_state.get_described_actions()
+                all_views_without_id, all_actions = top_views, top_candidate_actions
+
+                too_few_item_time = 0
+
+                for _ in range(MAX_SCROLL_NUM):  # then scroll down to the bottom
+                    whole_state_strs.append(top_state.state_str)  # record the states from the top to the bottom
+                    self.device.send_event(ScrollEvent(view=scroller, direction="down"))
+                    scrolled_state = self.device.get_current_state()
+                    state_prompt, scrolled_candidate_actions, scrolled_views, _ = scrolled_state.get_described_actions()
+
+                    scrolled_new_views = []
+                    for scrolled_view_id in range(len(scrolled_views)):
+                        scrolled_view = scrolled_views[scrolled_view_id]
+                        if scrolled_view not in all_views_without_id:
+                            scrolled_new_views.append(scrolled_view)
+                            all_views_without_id.append(scrolled_view)
+                            all_actions.append(prefix_scroll_event + [ScrollEvent(view=scroller, direction="down"),
+                                                                      scrolled_candidate_actions[scrolled_view_id]])
+                    # print('found new views:', scrolled_new_views)
+                    if len(scrolled_new_views) == 0:
+                        break
+
+                    prefix_scroll_event.append(ScrollEvent(view=scroller, direction="down"))
+
+                    if len(scrolled_new_views) < 2:
+                        too_few_item_time += 1
+                    if too_few_item_time >= 2:
+                        break
+
+                    self.utg.add_transition(ScrollEvent(view=scroller, direction="down"), top_state, scrolled_state)
+                    top_state = scrolled_state
+
+                # filter out the views that have been added to the whole_state by scrolling other scrollers
+                for all_view_id in range(len(all_views_without_id)):
+                    view = all_views_without_id[all_view_id]
+                    if view not in whole_state_views:
+                        whole_state_views.append(view)
+                        whole_state_actions.append(all_actions[all_view_id])
+
+                all_views_for_mark = []
+                _ = self._scroll_to_top(scroller, all_views_for_mark, top_state)
+            # print(whole_state_views)
+            action, candidate_actions, target_view, thought = self._get_action_from_views_actions(
+                views=whole_state_views, candidate_actions=whole_state_actions, state_strs=whole_state_strs,
+                action_history=self.__action_history, thought_history=self.__thought_history)
+
+            if isinstance(action, list):  # the screen has to be scrolled first
+                last_state = None
+                for eventid in range(len(action) - 1):
+                    self.device.send_event(action[eventid])
+                    last_state = self.device.get_current_state()
+                    # self.__action_history.append(current_state.get_action_desc(action[eventid]))
+                self.__action_history.append(current_state.get_action_descv2(action[-1], target_view))
+                self.__thought_history.append(thought)
+                return last_state, action[-1]
+            '''
+            end for dealing with scrollers
+            '''
+        else:
+            action, candidate_actions, target_view, thought = self._get_action_from_views_actions(
+                current_state=current_state, action_history=self.__action_history,
+                thought_history=self.__thought_history, state_strs=current_state.state_str)
+
+        if action == FINISHED:
+            return None, FINISHED
+        if action is not None:
+            self.__action_history.append(current_state.get_action_descv2(action, target_view))
+            self.__thought_history.append(thought)
+            return None, action
+
+        if self.__random_explore:
+            self.logger.info("Trying random event.")
+            action = random.choice(candidate_actions)
+            self.__action_history.append(current_state.get_action_descv2(action, target_view))
+            self.__thought_history.append('random trying')
+            return None, action
+
+        # If couldn't find a exploration target, stop the app
+        stop_app_intent = self.app.get_stop_intent()
+        self.logger.info("Cannot find an exploration target. Trying to restart app...")
+        self.__action_history.append('- stop the app')
+        self.__thought_history.append("couldn't find a exploration target, stop the app")
+        self.__event_trace += EVENT_FLAG_STOP_APP
+        return None, IntentEvent(intent=stop_app_intent)
+
+    def _save2yaml(self, file_name, state_prompt, idx, state_str, inputs='null'):
+        if not os.path.exists(file_name):
+            tmp_data = {
+                'task_name': self.task,
+                'step_num': 0,
+                'records': []
+            }
+            with open(file_name, 'w', encoding='utf-8') as f:
+                yaml.dump(tmp_data, f)
+
+        with open(file_name, 'r', encoding='utf-8') as f:
+            old_yaml_data = yaml.safe_load(f)
+
+        new_records = old_yaml_data['records']
+        new_records.append(
+            {'State': state_prompt,
+             'Choice': idx,
+             'Input': inputs,
+             'state_str': state_str}
+        )
+        # import pdb;pdb.set_trace()
+        data = {
+            'task_name': self.task,
+            'step_num': len(list(old_yaml_data['records'])),
+            'records': new_records
+        }
+        with open(file_name, 'w', encoding='utf-8') as f:
+            yaml.dump(data, f)
+
+    def _make_prompt_lmql(self, state_prompt, action_history, is_text, state_str, view_text=None, thought_history=None,
+                          use_thoughts=False):
+        if self.use_memory:
+            # if isinstance(state_str, list):
+            #     if len(state_str) == 1:
+            #         state_str = state_str[0]
+            #     else:
+            #         state_str = self.memory.hash_state(state_prompt)
+            # new_state_prompt = self.f(action_history, state_prompt, state_str)
+            # if new_state_prompt !z= None and new_state_prompt != 'no_description':
+            #     state_prompt = new_state_prompt
+            if len(action_history) <= len(self.similar_ele_path):
+                current_ui_id = len(action_history) - 1
+                new_state_prompt = tools.insert_onclick_into_prompt(state_prompt, self.similar_ele_path[current_ui_id],
+                                                                    self.similar_ele_function)
+                if new_state_prompt != state_prompt:  # current state contains an element of insight
+                    self.state_ele_memory[state_str] = new_state_prompt
+                state_prompt = new_state_prompt
+            # elif state_str in self.state_ele_memory.keys():
+            #     state_prompt = self.state_ele_memory[state_str]
+
+        if use_thoughts:
+            history_with_thought = []
+            for idx in range(len(action_history)):
+                history_with_thought.append(action_history[idx] + ' Reason: ' + thought_history[idx])
+        else:
+            history_with_thought = action_history
+
+        return '\n'.join(history_with_thought), state_prompt
+
+    def _make_prompt(self, state_prompt, action_history, is_text, state_str, view_text=None, thought_history=None,
+                     use_thoughts=False):
+        if self.use_memory:
+            # if isinstance(state_str, list):
+            #     if len(state_str) == 1:
+            #         state_str = state_str[0]
+            #     else:
+            #         state_str = self.memory.hash_state(state_prompt)
+            # new_state_prompt = self.f(action_history, state_prompt, state_str)
+            # if new_state_prompt !z= None and new_state_prompt != 'no_description':
+            #     state_prompt = new_state_prompt
+            if len(action_history) <= len(self.similar_ele_path):
+                current_ui_id = len(action_history) - 1
+                new_state_prompt = tools.insert_onclick_into_prompt(state_prompt, self.similar_ele_path[current_ui_id],
+                                                                    self.similar_ele_function)
+                if new_state_prompt != state_prompt:  # current state contains an element of insight
+                    self.state_ele_memory[state_str] = new_state_prompt
+                state_prompt = new_state_prompt
+            # elif state_str in self.state_ele_memory.keys():
+            #     state_prompt = self.state_ele_memory[state_str]
+
+        if use_thoughts:
+            history_with_thought = []
+            for idx in range(len(action_history)):
+                history_with_thought.append(action_history[idx] + ' Reason: ' + thought_history[idx])
+        else:
+            history_with_thought = action_history
+
+        introduction = '''You are a smartphone assistant to help users complete tasks by interacting with mobile apps.Given a task, the previous UI actions, and the content of current UI state, your job is to decide whether the task is already finished by the previous actions, and if not, decide which UI element in current UI state should be interacted.'''
+        task_prompt = 'Task: ' + self.task
+        history_prompt = 'Previous UI actions: \n' + '\n'.join(history_with_thought)
+        full_state_prompt = 'Current UI state: \n' + state_prompt
+        request_prompt = "\nYour answer should always use the following format: { \"Steps\": \"...<steps usually involved to complete the above task on a smartphone>\", \"Analyses\": \"...<Analyses of the relations between the task, and relations between the previous UI actions and current UI state>\", \"Finished\": \"Yes/No\", \"Next step\": \"None or a <high level description of the next step>\", \"id\": \"an integer or -1 (if the task has been completed by previous UI actions)\", \"action\": \"tap or input\", \"input_text\": \"N/A or ...<input text>\" } \n\n**Note that the id is the id number of the UI element to interact with. If you think the task has been completed by previous UI actions, the id should be -1. If 'Finished' is 'Yes', then the 'description' of 'Next step' is 'None', otherwise it is a high level description of the next step. If the 'action' is 'tap', the 'input_text' is N/A, otherwise it is the '<input text>'. Please do not output any content other than the JSON format. **"
+        prompt = introduction + '\n' + task_prompt + '\n' + history_prompt + '\n' + full_state_prompt + '\n' + request_prompt
+        return prompt
+
+    def _extract_input_text(self, string, start='Text: ', end=' Thought'):
+        start_index = string.find(start) + len(start)  # Find the location of 'start'
+        if start_index == -1:
+            start_index = 0
+        end_index = string.find(end)  # Find the location of 'end'
+        substring = string[start_index:end_index] if end_index != -1 else string[start_index:]
+        return substring
+
+    def _extract_input_textv2(self, string):
+        if string[:11] == 'InputText: ':
+            return string[11:]
+        else:
+            return string
+
+    def _get_text_view_description(self, view):
+        content_description = safe_dict_get(view, 'content_description', default='')
+        view_text = safe_dict_get(view, 'text', default='')
+
+        view_desc = f"<input class='&'>#</input>"  # .replace('&', view_class)#.replace('#', text)
+        if view_text:
+            view_desc = view_desc.replace('#', view_text)
+        else:
+            view_desc = view_desc.replace('#', '')
+        if content_description:
+            view_desc = view_desc.replace('&', content_description)
+        else:
+            view_desc = view_desc.replace(" class='&'", "")
+        return view_desc
+
+    def _get_action_from_views_actions(self, action_history, thought_history, views=None, candidate_actions=None,
+                                       state_strs=None, current_state=None):
+        '''
+        get action choice from LLM based on a list of views and corresponding actions
+        '''
+        if current_state:
+            state_prompt, candidate_actions, _, _ = current_state.get_described_actions()
+            state_str = current_state.state_str
+            if USE_LMQL:
+                history, state_prompt = self._make_prompt_lmql(state_prompt, action_history, is_text=False,
+                                                               state_str=state_str,
+                                                               thought_history=thought_history)
+            else:
+                prompt = self._make_prompt(state_prompt, action_history, is_text=False, state_str=state_str,
+                                           thought_history=thought_history)
+        else:
+            views_with_id = []
+            for id in range(len(views)):
+                views_with_id.append(tools.insert_id_into_view(views[id], id))
+            state_prompt = '\n'.join(views_with_id)
+            state_str = tools.hash_string(state_prompt)
+            if USE_LMQL:
+                history, state_prompt = self._make_prompt_lmql(state_prompt, action_history, is_text=False,
+                                                               state_str=state_str,
+                                                               thought_history=thought_history)
+            else:
+                prompt = self._make_prompt(state_prompt, action_history, is_text=False, state_str=state_str,
+                                           thought_history=thought_history)
+
+        # ids = [str(idx) for idx, i in enumerate(candidate_actions)]
+        ids = str([i for i in range(len(candidate_actions))])
+
+        if USE_LMQL:
+            idx, action_type, input_text = prompt_llm_with_history(task=self.task, history=history,
+                                                                   ui_desc=state_prompt, ids=ids)
+        else:
+            print('********************************** prompt: **********************************')
+            print(prompt)
+            print('********************************** end of prompt **********************************')
+            response = tools.query_gpt(prompt)
+
+            print(f'response: {response}')
+            idx, action_type, input_text = tools.extract_action(response)
+        # import pdb;pdb.set_trace()
+        file_name = self.device.output_dir + '/' + self.task.replace('"', '_').replace("'",
+                                                                                       '_') + '.yaml'  # str(str(time.time()).replace('.', ''))
+        idx = int(idx)
+        if idx == -1:
+            return FINISHED, None, None, None
+        selected_action = candidate_actions[idx]
+
+        selected_view_description = tools.get_item_properties_from_id(ui_state_desc=state_prompt, view_id=idx)
+        thought = ''  # tools.get_thought(response)
+
+        if isinstance(selected_action, SetTextEvent):
+            if input_text != "N/A" and input_text != None:
+                selected_action.text = input_text.replace('"', '').replace(' ', '-')
+                if len(selected_action.text) > 30:  # heuristically disable long text input
+                    selected_action.text = ''
+            else:
+                selected_action.text = ''
+            self._save2yaml(file_name, state_prompt, idx, state_strs, inputs=selected_action.text)
+        else:
+            self._save2yaml(file_name, state_prompt, idx, state_strs, inputs='null')
+        return selected_action, candidate_actions, selected_view_description, thought
+
+    def _insert_predictions_into_state_prompt(self, state_prompt, current_state_item_descriptions):
+        state_prompt_list = state_prompt.split('>\n')
+        item_list = []
+        for view_desc in state_prompt_list:
+            if view_desc[0] == ' ':
+                view_desc = view_desc[1:]
+            if view_desc[-1] != '>':
+                view_desc = view_desc + '>'
+            view_desc_without_id = tools.get_view_without_id(view_desc)
+            if view_desc_without_id in current_state_item_descriptions.keys():
+                prediction = 'title=' + current_state_item_descriptions[view_desc_without_id]
+                view_desc_list = view_desc.split(' ', 2)
+                if len(view_desc_list) > 2:  # for example, <button id=3 class='More options' checked=False></button>
+                    inserted_view = view_desc_list[0] + ' ' + view_desc_list[1] + ' ' + prediction + ' ' + \
+                                    view_desc_list[2]
+                else:  # for example, <p id=4>June</p>
+                    latter_part = view_desc_list[1].split('>', 1)
+                    inserted_view = view_desc_list[0] + ' ' + latter_part[0] + ' ' + prediction + '>' + latter_part[1]
+                if inserted_view[-1] != '>':
+                    inserted_view += '>'
+                item_list.append(inserted_view)
+            else:
+                item_list.append(view_desc)
+        return '\n'.join(item_list)
+
+    def _get_item_prediction(self, action_history, state_prompt, state_str):
+        '''
+        find the most match history_state in memory_graph based on action_history.
+        match the current items in device_state with the history items in history_state,
+        return the predicted screen after touching the item
+        if can not find the device_state not in action_history, return None, can decide whether to explore
+        '''
+
+        def parse_history_views(history):
+            parsed_views = []
+            for history_action in history:
+                history_action_list = history_action.split(': ', 1)
+                if 'launchApp' in history_action:
+                    return []
+                latter_part = history_action_list[1]
+                if ' InputText:' in latter_part:
+                    target_view = latter_part.split(' InputText:', 1)[0]
+                elif ' Reason:' in latter_part:
+                    target_view = latter_part.split(' Reason:', 1)[0]
+                else:
+                    target_view = latter_part
+                parsed_views.append(target_view)
+            return parsed_views
+
+        action_history = parse_history_views(action_history[1:])  # ignore the first action, which is launching the app
+
+        # search the current state str in memory based on history actions
+        current_state_str = self.memory.get_first_state_str()
+        next_state_str = None
+        for actionid in range(0, len(action_history)):
+            actioned_view = action_history[actionid]  # action_history[actionid].rsplit('.', 1)[0]
+            next_state_str = self.memory.get_successor_by_node_edge(current_state_str, actioned_view)
+            current_state_str = next_state_str
+            # the past actions have lead to a state that does not exist in the memory
+            if next_state_str == None:
+                break
+        if next_state_str == None:
+            current_state_str = state_str
+        # now, current_state_str is the current device state string, we should add all its successors' information into the items on this device state
+        current_state_item_descriptions = self.memory.get_predictions_of_items(current_state_str)
+        # import pdb;pdb.set_trace()
+        if current_state_item_descriptions is None:
+            return 'no_description'  # there is no description of the current state, either it is the leaf node or it was not explored
+        # import pdb;pdb.set_trace()
+        return self._insert_predictions_into_state_prompt(state_prompt, current_state_item_descriptions)

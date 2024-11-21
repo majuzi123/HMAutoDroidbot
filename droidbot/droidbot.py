@@ -51,7 +51,8 @@ class DroidBot(object):
                  ignore_ad=False,
                  replay_output=None,
                  is_harmonyos=False,
-                 save_log=False):
+                 save_log=False,
+                 task=None):
         """
         initiate droidbot with configurations
         :return:
@@ -109,6 +110,8 @@ class DroidBot(object):
         self.ignore_ad = ignore_ad
         self.replay_output = replay_output
 
+        self.task = task
+
 
         self.enabled = True
 
@@ -142,7 +145,8 @@ class DroidBot(object):
                     script_path=script_path,
                     profiling_method=profiling_method,
                     master=master,
-                    replay_output=replay_output)
+                    replay_output=replay_output,
+                    task = self.task)
             # The initialization of HarmonyOS
             else:
                 self.device = DeviceHM(
@@ -172,7 +176,8 @@ class DroidBot(object):
                     script_path=script_path,
                     profiling_method=profiling_method,
                     master=master,
-                    replay_output=replay_output)
+                    replay_output=replay_output,
+                    task = self.task)
         except Exception:
             import traceback
             traceback.print_exc()

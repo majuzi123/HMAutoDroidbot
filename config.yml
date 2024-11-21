@@ -12,4 +12,5 @@ system: harmonyOS
 device: 127.0.0.1:5555
 output_dir: output
 app_path: D:\Users\John\PycharmProjects\HMDroidbot\orangeMall.hap
-count: 100
+#count: 100
+task: "购买一件商品"

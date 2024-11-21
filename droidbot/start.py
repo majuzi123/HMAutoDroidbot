@@ -16,7 +16,7 @@ def parse_args():
     parse command line input
     generate options including host name, port number
     """
-    parser = argparse.ArgumentParser(description="Start DroidBot to test an Android app.",
+    parser = argparse.ArgumentParser(description="Start DroidBot to test an Harmony app.",
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-d","-t", action="store", dest="device_serial", required=False,
                         help="The serial number of target device (use `adb devices` to find Android device and `hdc list targets` to find HarmonyOS device)")
@@ -24,6 +24,8 @@ def parse_args():
                         help="The file path to target APK")
     parser.add_argument("-o", action="store", dest="output_dir",
                         help="directory of output")
+    parser.add_argument("-task", action="store", dest="task", default="mingle around",
+                        help="the task to execute, in natural language")
     # parser.add_argument("-env", action="store", dest="env_policy",
     #                     help="policy to set up environment. Supported policies:\n"
     #                          "none\tno environment will be set. App will run in default environment of device; \n"
@@ -119,6 +121,8 @@ def main():
             opts.output_dir = value
         elif key.lower() == "count" and value:
             opts.count = value
+        elif key.lower() == "task" and value:
+            opts.task = value
         elif key.lower() in ["target", "device", "device_serial"] and value:
             opts.device_serial = value
 
@@ -147,7 +151,7 @@ def main():
             output_dir=opts.output_dir,
             # env_policy=opts.env_policy,
             env_policy=env_manager.POLICY_NONE,
-            policy_name=opts.input_policy,
+            policy_name=input_manager.POLICY_TASK,
             random_input=opts.random_input,
             script_path=opts.script_path,
             event_interval=opts.interval,
@@ -173,8 +177,10 @@ def main():
             is_emulator=opts.is_emulator,
             output_dir=opts.output_dir,
             # env_policy=opts.env_policy,
+            task=opts.task,
             env_policy=env_manager.POLICY_NONE,
-            policy_name=opts.input_policy,
+            # policy_name=opts.input_policy,
+            policy_name=input_manager.POLICY_TASK,
             random_input=opts.random_input,
             script_path=opts.script_path,
             event_interval=opts.interval,
