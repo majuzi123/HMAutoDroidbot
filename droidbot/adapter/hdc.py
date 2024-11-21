@@ -335,12 +335,12 @@ class HDC(Adapter):
     def get_views(self, output_dir):
 
         #* Use hidumper to get views
-        dumper = HiDumper(hdc=self)
-        views = dumper.hierachy
+        # dumper = HiDumper(hdc=self)
+        # views = dumper.hierachy
 
         #* use uitest dumper to get views
-        # dumper = UitestDumper(hdc=self, output_dir=output_dir)
-        # views = dumper.get_views()
+        dumper = UitestDumper(hdc=self, output_dir=output_dir)
+        views = dumper.get_views()
 
         return views
 

@@ -1,5 +1,5 @@
 # env: the system of your PC (e.g. windows, macOS, Linux)
-env: Linux
+env: windows
 
 # system: the target harmonyOS
 system: harmonyOS
@@ -8,3 +8,8 @@ system: harmonyOS
 # output_dir: <output path>
 # app_path: target .hap file
 # count: <number of events to input>
+
+device: 127.0.0.1:5555
+output_dir: output
+app_path: D:\Users\John\PycharmProjects\HMDroidbot\orangeMall.hap
+count: 100
