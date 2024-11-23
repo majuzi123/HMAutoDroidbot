@@ -1,9 +1,11 @@
 import copy
 import math
 import os
+import tools
+import networkx as nx
 
 from .utils import md5, deprecated
-from .input_event import TouchEvent, LongTouchEvent, ScrollEvent, SetTextEvent, KeyEvent
+from .input_event import TouchEvent, LongTouchEvent, ScrollEvent, SetTextEvent, KeyEvent, UIEvent
 
 
 class DeviceState(object):
@@ -42,6 +44,7 @@ class DeviceState(object):
         self.width = device.get_width(refresh=True)
         self.height = device.get_height(refresh=False)
         self.pagePath = self.__get_pagePath()
+        self.view_graph = self._build_view_graph()
 
     @property
     def activity_short_name(self):
@@ -864,6 +867,129 @@ class DeviceState(object):
         views_without_id = self._remove_view_ids(view_descs)
         # print(views_without_id)
         return state_desc, available_actions, views_without_id, important_view_ids
+
+    def _get_ancestor_id(self, view, key, default=None):
+        if self.__safe_dict_get(view, key=key, default=False):
+            return view['temp_id']
+        all_views = [view] + [self.views[i] for i in self.get_all_ancestors(view)]
+        for v in all_views:
+            value = self.__safe_dict_get(v, key)
+            if value:
+                return v['temp_id']
+        return default
+
+    def _extract_all_children(self, id):
+        successors = []
+        successors_of_view = nx.dfs_successors(self.view_graph, source=id, depth_limit=100)
+        # print(successors_of_view)
+        for k, v in successors_of_view.items():
+            for successor_id in v:
+                if successor_id not in successors and successor_id != id:
+                    successors.append(successor_id)
+        return successors
+        # if len(self.viewtree.children(id)) == 0:
+        #     return
+        # else:
+        #     for ch_ele in self.viewtree.children(id):
+        #         childrenlist.append(ch_ele)
+        #         self._extract_all_children(ch_ele, childrenlist)
+        # return childrenlist
+
+    def _merge_textv2(self, children_ids, remove_time_and_ip=False, important_view_ids=[]):
+        texts, content_descriptions = [], []
+        for childid in children_ids:
+
+            if not self.__safe_dict_get(self.views[childid], 'visible') or \
+                self.__safe_dict_get(self.views[childid], 'resource_id') in \
+               ['android:id/navigationBarBackground',
+                'android:id/statusBarBackground']:
+                # if the successor is not visible, then ignore it!
+                continue
+
+            text = self.__safe_dict_get(self.views[childid], 'text', default='')
+            if len(text) > 50:
+                text = text[:50]
+
+            if remove_time_and_ip:
+                text = self._remove_ip_and_date(text)
+
+            if text != '':
+                # text = text + '  {'+ str(childid)+ '}'
+                texts.append(text)
+                important_view_ids.append([text, childid])
+
+            content_description = self.__safe_dict_get(self.views[childid], 'content_description', default='')
+            if len(content_description) > 50:
+                content_description = content_description[:50]
+
+            if remove_time_and_ip:
+                content_description = self._remove_ip_and_date(content_description)
+
+            if content_description != '':
+                # content_description = content_description + '  {'+ str(childid)+ '}'
+                important_view_ids.append([content_description, childid])
+                content_descriptions.append(content_description)
+
+        merged_text = '<br>'.join(texts) if len(texts) > 0 else ''
+        merged_desc = '<br>'.join(content_descriptions) if len(content_descriptions) > 0 else ''
+        return merged_text, merged_desc, important_view_ids
+
+    def _get_children_checked(self, children_ids):
+        for childid in children_ids:
+            if self.__safe_dict_get(self.views[childid], 'checked', default=False):
+                return True
+        return False
+
+    def _remove_ip_and_date(self, string, remove_candidates=None):
+        if not string:
+            return string
+        import re
+        if not remove_candidates:
+            remove_candidates = ['hr', 'min', 'sec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'\
+                                 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December',
+                                 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
+                                 'Sun', 'Mon', 'Tues', 'Wed', 'Thur', 'Fri', 'Sat']  # '[0-9]+',
+        for remove_candidate in remove_candidates:
+            string = re.sub(remove_candidate, '', string)
+        if ':' in string or '::' in string or '%' in string:  # ip address, hour, storage usage
+            string = ''
+        # if '::' in string:  # ip address
+        #     string = ''
+        return string
+
+    def _remove_view_ids(self, views):
+        import re
+        removed_views = []
+        for view_desc in views:
+            view_desc_without_id = tools.get_view_without_id(view_desc)
+            removed_views.append(view_desc_without_id)
+        return removed_views
+
+    def _build_view_graph(self):
+        view_graph = nx.DiGraph()
+        for view_id in range(1, len(self.views)):
+            view = self.views[view_id]
+            parentid = view['parent']
+            view_graph.add_edge(parentid, view_id)
+        # self.visualize_graph(view_graph)
+        return view_graph
+    def get_action_descv2(self, action, view_desc):
+        desc = action.event_type
+        if isinstance(action, KeyEvent):
+            desc = '- TapOn: ' + view_desc
+        if isinstance(action, UIEvent):
+            if isinstance(action, LongTouchEvent):
+                desc = '- LongTapOn: ' + view_desc
+            elif isinstance(action, SetTextEvent):
+                desc = '- TapOn: ' + view_desc  + ' InputText: ' + action.text
+            elif isinstance(action, ScrollEvent):
+                desc = f'- Scroll{action.direction.lower()}: ' + view_desc
+            else:
+                desc = '- TapOn: ' + view_desc
+        return desc
+
+
+
 
 
 if __name__ == "__main__":

@@ -811,7 +811,8 @@ class TaskPolicy(UtgBasedInputPolicy):
                     # self.__action_history = [f'- start the app {self.app.app_name}']
                     self.__action_history = [f'- launchApp {self.app.app_name}']
                     self.__thought_history = [f'launch the app {self.app.app_name} to finish the task {self.task}']
-                    return None, IntentEvent(intent=start_app_intent)
+                    # return None, IntentEvent(intent=start_app_intent)
+                    return IntentEvent(intent=start_app_intent)
 
         elif current_state.get_app_activity_depth(self.app) > 0:
             # If the app is in activity stack but is not in foreground
@@ -828,7 +829,8 @@ class TaskPolicy(UtgBasedInputPolicy):
                 self.logger.info("Going back to the app...")
                 self.__action_history.append('- go back')
                 self.__thought_history.append('the app has not been in foreground for too long, try to go back')
-                return None, go_back_event
+                # return None, go_back_event
+                return go_back_event
         else:
             # If the app is in foreground
             self.__num_steps_outside = 0
@@ -921,20 +923,24 @@ class TaskPolicy(UtgBasedInputPolicy):
             action, candidate_actions, target_view, thought = self._get_action_from_views_actions(
                 current_state=current_state, action_history=self.__action_history,
                 thought_history=self.__thought_history, state_strs=current_state.state_str)
+            # print(action)
 
         if action == FINISHED:
-            return None, FINISHED
+            # return None, FINISHED
+            return FINISHED
         if action is not None:
             self.__action_history.append(current_state.get_action_descv2(action, target_view))
             self.__thought_history.append(thought)
-            return None, action
+            # return None, action
+            return action
 
         if self.__random_explore:
             self.logger.info("Trying random event.")
             action = random.choice(candidate_actions)
             self.__action_history.append(current_state.get_action_descv2(action, target_view))
             self.__thought_history.append('random trying')
-            return None, action
+            # return None, action
+            return action
 
         # If couldn't find a exploration target, stop the app
         stop_app_intent = self.app.get_stop_intent()
@@ -942,7 +948,9 @@ class TaskPolicy(UtgBasedInputPolicy):
         self.__action_history.append('- stop the app')
         self.__thought_history.append("couldn't find a exploration target, stop the app")
         self.__event_trace += EVENT_FLAG_STOP_APP
-        return None, IntentEvent(intent=stop_app_intent)
+        # return None, IntentEvent(intent=stop_app_intent)
+        return IntentEvent(intent=stop_app_intent)
+
 
     def _save2yaml(self, file_name, state_prompt, idx, state_str, inputs='null'):
         if not os.path.exists(file_name):
@@ -1111,6 +1119,7 @@ class TaskPolicy(UtgBasedInputPolicy):
 
             print(f'response: {response}')
             idx, action_type, input_text = tools.extract_action(response)
+            # print(idx,action_type,input_text)
         # import pdb;pdb.set_trace()
         file_name = self.device.output_dir + '/' + self.task.replace('"', '_').replace("'",
                                                                                        '_') + '.yaml'  # str(str(time.time()).replace('.', ''))
@@ -1118,7 +1127,7 @@ class TaskPolicy(UtgBasedInputPolicy):
         if idx == -1:
             return FINISHED, None, None, None
         selected_action = candidate_actions[idx]
-
+        # print(selected_action)
         selected_view_description = tools.get_item_properties_from_id(ui_state_desc=state_prompt, view_id=idx)
         thought = ''  # tools.get_thought(response)
 
@@ -1132,6 +1141,7 @@ class TaskPolicy(UtgBasedInputPolicy):
             self._save2yaml(file_name, state_prompt, idx, state_strs, inputs=selected_action.text)
         else:
             self._save2yaml(file_name, state_prompt, idx, state_strs, inputs='null')
+        # print(selected_action, candidate_actions, selected_view_description, thought)
         return selected_action, candidate_actions, selected_view_description, thought
 
     def _insert_predictions_into_state_prompt(self, state_prompt, current_state_item_descriptions):
