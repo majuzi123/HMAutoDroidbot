@@ -4,6 +4,7 @@ import hashlib
 import ast
 from openai import OpenAI
 ACTION_MISSED = None
+import time
 
 def get_id_from_view_desc(view_desc):
     '''
@@ -75,24 +76,60 @@ def get_view_without_id(view_desc):
 #     return res
 
 def query_gpt(prompt):
-    # print(prompt)
+    # # print(prompt)
     client = OpenAI(
         api_key="sk-wAdbDvY3957qtwtGv0gas9yv6yCTLo8jMBkhyIg4bVIlPjxt",
         base_url="https://api.moonshot.cn/v1",
     )
-    retry = 0
-    completion = client.chat.completions.create(
-        model="moonshot-v1-8k",
-        messages=[
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
-        temperature = 0.3,
+    # retry = 0
+    # delay = 10
+    # # 在发送请求之前等待指定的秒数
+    # time.sleep(delay)
+    # completion = client.chat.completions.create(
+    #     model="moonshot-v1-8k",
+    #     messages=[
+    #         {
+    #             "role": "user",
+    #             "content": prompt,
+    #         }
+    #     ],
+    #     temperature = 0.3,
+    # )
+    # res = completion.choices[0].message.content
+    # return res
+    response = send_request_with_retry(
+        client,
+        "moonshot-v1-8k",
+        [
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ],
+        0.3,
     )
-    res = completion.choices[0].message.content
-    return res
+    return response
+
+
+def send_request_with_retry(client, model, messages, temperature, max_retries=3, delay=60):
+    retries = 0
+    while retries < max_retries:
+        try:
+            completion = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+            )
+            return completion.choices[0].message.content
+        except Exception as e:
+            retries += 1
+            if retries < max_retries:
+                print(f"Rate limit exceeded. Retrying in {delay} seconds...")
+                time.sleep(delay)
+            else:
+                print("Max retries reached. Aborting...")
+                raise
+
 
 def delete_old_views_from_new_state(old_state, new_state, without_id=True):
     '''

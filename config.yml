@@ -13,4 +13,4 @@ device: 127.0.0.1:5555
 output_dir: output
 app_path: D:\Users\John\PycharmProjects\HMDroidbot\orangeMall.hap
 #count: 100
-task: "随便点击一件商品进入详情页，然后点击立即购买，提交订单,并成功支付"
+task: "随便点击一件商品进入详情页，然后点击立即购买，提交订单,并成功支付，都完成后停止app即可"
