@@ -685,16 +685,16 @@ class ScrollEvent(UIEvent):
         end_x, end_y = x, y
         duration = 500
 
-        if self.direction == "UP":
+        if self.direction == "up":
             start_y -= height * 2 / 5
             end_y += height * 2 / 5
-        elif self.direction == "DOWN":
+        elif self.direction == "down":
             start_y += height * 2 / 5
             end_y -= height * 2 / 5
-        elif self.direction == "LEFT":
+        elif self.direction == "left":
             start_x -= width * 2 / 5
             end_x += width * 2 / 5
-        elif self.direction == "RIGHT":
+        elif self.direction == "right":
             start_x += width * 2 / 5
             end_x -= width * 2 / 5
 

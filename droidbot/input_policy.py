@@ -99,7 +99,7 @@ class InputPolicy(object):
                     event = KillAppEvent(app=self.app)
                 else:
                     event = self.generate_event()
-                    print(event)
+                    # print(event)
                 if event == FINISHED:
                     break
                 input_manager.add_event(event)
@@ -836,12 +836,12 @@ class TaskPolicy(UtgBasedInputPolicy):
             self.__num_steps_outside = 0
 
         scrollable_views = current_state.get_scrollable_views()  # self._get_scrollable_views(current_state)
+        # print(scrollable_views)
 
         if len(scrollable_views) > 0:
             '''
             if there is at least one scroller in the screen, we scroll each scroller many times until all the screens after scrolling have been recorded, you do not need to read
             '''
-            # print(scrollable_views)
 
             actions_dict = {}
             whole_state_views, whole_state_actions, whole_state_strs = [], [], []
@@ -853,13 +853,16 @@ class TaskPolicy(UtgBasedInputPolicy):
 
             for scrollerid in range(len(scrollable_views)):
                 scroller = scrollable_views[scrollerid]
+                # print(scroller)
                 # prefix_scroll_event = []
                 actions_dict[scrollerid] = []
 
                 prefix_scroll_event = self._scroll_to_top(scroller, all_views_for_mark)
+                # print(prefix_scroll_event)
 
                 # after scrolling to the top, update the current_state
                 top_state = self.device.get_current_state()
+                # print(top_state)
                 state_prompt, top_candidate_actions, top_views, _ = top_state.get_described_actions()
                 all_views_without_id, all_actions = top_views, top_candidate_actions
 
@@ -867,6 +870,7 @@ class TaskPolicy(UtgBasedInputPolicy):
 
                 for _ in range(MAX_SCROLL_NUM):  # then scroll down to the bottom
                     whole_state_strs.append(top_state.state_str)  # record the states from the top to the bottom
+                    # print(whole_state_strs)
                     self.device.send_event(ScrollEvent(view=scroller, direction="down"))
                     scrolled_state = self.device.get_current_state()
                     state_prompt, scrolled_candidate_actions, scrolled_views, _ = scrolled_state.get_described_actions()
@@ -884,7 +888,7 @@ class TaskPolicy(UtgBasedInputPolicy):
                         break
 
                     prefix_scroll_event.append(ScrollEvent(view=scroller, direction="down"))
-
+                    print(prefix_scroll_event)
                     if len(scrolled_new_views) < 2:
                         too_few_item_time += 1
                     if too_few_item_time >= 2:

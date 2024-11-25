@@ -697,6 +697,7 @@ class DeviceState(object):
     def get_scrollable_views(self):
         scrollable_views = []
         enabled_view_ids = []
+        # print(self.views)
         for view_dict in self.views:
             # exclude navigation bar if exists
             if self.__safe_dict_get(view_dict, 'visible') and \
@@ -704,6 +705,7 @@ class DeviceState(object):
                     ['android:id/navigationBarBackground',
                      'android:id/statusBarBackground']:
                 enabled_view_ids.append(view_dict['temp_id'])
+        # print(enabled_view_ids)
         for view_id in enabled_view_ids:
             view = self.views[view_id]
             scrollable = self.__safe_dict_get(view, 'scrollable')
@@ -712,10 +714,12 @@ class DeviceState(object):
             scrollable = self.__safe_dict_get(view, 'scrollable')
             checkable = self._get_self_ancestors_property(view, 'checkable')
             long_clickable = self._get_self_ancestors_property(view, 'long_clickable')
-            editable = self.__safe_dict_get(view, 'editable')
+            # editable = self.__safe_dict_get(view, 'editable')
 
-            if scrollable and not clickable and not checkable and not long_clickable and not editable:
+            # if scrollable and not clickable and not checkable and not long_clickable and not editable:
+            if scrollable:
                 scrollable_views.append(view)
+        # print(scrollable_views)
         return scrollable_views
 
     def get_described_actions(self, prefix='', remove_time_and_ip=False,
