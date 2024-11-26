@@ -694,32 +694,60 @@ class DeviceState(object):
         merged_desc = '<br>'.join(content_descriptions) if len(content_descriptions) > 0 else ''
         return merged_text, merged_desc
 
+    # def get_scrollable_views(self):
+    #     scrollable_views = []
+    #     enabled_view_ids = []
+    #     # print(self.views)
+    #     for view_dict in self.views:
+    #         # exclude navigation bar if exists
+    #         if self.__safe_dict_get(view_dict, 'visible') and \
+    #                 self.__safe_dict_get(view_dict, 'resource_id') not in \
+    #                 ['android:id/navigationBarBackground',
+    #                  'android:id/statusBarBackground']:
+    #             enabled_view_ids.append(view_dict['temp_id'])
+    #     # print(enabled_view_ids)
+    #     for view_id in enabled_view_ids:
+    #         view = self.views[view_id]
+    #         scrollable = self.__safe_dict_get(view, 'scrollable')
+    #
+    #         clickable = self._get_self_ancestors_property(view, 'clickable')
+    #         scrollable = self.__safe_dict_get(view, 'scrollable')
+    #         checkable = self._get_self_ancestors_property(view, 'checkable')
+    #         long_clickable = self._get_self_ancestors_property(view, 'long_clickable')
+    #         # editable = self.__safe_dict_get(view, 'editable')
+    #
+    #         # if scrollable and not clickable and not checkable and not long_clickable and not editable:
+    #         if scrollable:
+    #             scrollable_views.append(view)
+    #     # print(scrollable_views)
+    #     return scrollable_views
+
     def get_scrollable_views(self):
+        main_scrollable_view = None
+        max_area = 0  # 用于记录最大区域的变量
         scrollable_views = []
-        enabled_view_ids = []
-        # print(self.views)
+
         for view_dict in self.views:
-            # exclude navigation bar if exists
+            # 排除导航栏和状态栏
             if self.__safe_dict_get(view_dict, 'visible') and \
                     self.__safe_dict_get(view_dict, 'resource_id') not in \
-                    ['android:id/navigationBarBackground',
-                     'android:id/statusBarBackground']:
-                enabled_view_ids.append(view_dict['temp_id'])
-        # print(enabled_view_ids)
-        for view_id in enabled_view_ids:
-            view = self.views[view_id]
-            scrollable = self.__safe_dict_get(view, 'scrollable')
+                    ['android:id/navigationBarBackground', 'android:id/statusBarBackground']:
+                # 检查视图是否可滑动
+                scrollable = self.__safe_dict_get(view_dict, 'scrollable')
+                if scrollable:
+                    # 计算视图的区域
+                    bounds = view_dict.get('bounds', [])
+                    if bounds and len(bounds) == 2:
+                        x1, y1 = bounds[0]
+                        x2, y2 = bounds[1]
+                        area = (x2 - x1) * (y2 - y1)
 
-            clickable = self._get_self_ancestors_property(view, 'clickable')
-            scrollable = self.__safe_dict_get(view, 'scrollable')
-            checkable = self._get_self_ancestors_property(view, 'checkable')
-            long_clickable = self._get_self_ancestors_property(view, 'long_clickable')
-            # editable = self.__safe_dict_get(view, 'editable')
-
-            # if scrollable and not clickable and not checkable and not long_clickable and not editable:
-            if scrollable:
-                scrollable_views.append(view)
-        # print(scrollable_views)
+                        # 找到最大的区域，即最主要的滑动视图
+                        if area > max_area:
+                            max_area = area
+                            main_scrollable_view = view_dict
+        # print(main_scrollable_view)
+        scrollable_views.append(main_scrollable_view)
         return scrollable_views
 
     def get_described_actions(self, prefix='', remove_time_and_ip=False,

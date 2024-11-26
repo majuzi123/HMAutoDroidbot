@@ -683,7 +683,7 @@ class ScrollEvent(UIEvent):
 
         start_x, start_y = x, y
         end_x, end_y = x, y
-        duration = 500
+        duration = 1
 
         if self.direction == "up":
             start_y -= height * 2 / 5
