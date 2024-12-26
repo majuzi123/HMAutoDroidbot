@@ -8,6 +8,7 @@ import os
 import pathlib
 import typing
 import time
+import shlex
 from ..utils import get_yml_config
 try:
     from shlex import quote # Python 3
@@ -127,16 +128,14 @@ class HDC(Adapter):
         @return: output of hdc shell command
         """
 
-        
-
         if isinstance(extra_args, str):
-            extra_args = extra_args.split()
+            extra_args = shlex.split(extra_args)
         if not isinstance(extra_args, list):
             msg = "invalid arguments: %s\nshould be list or str, %s given" % (extra_args, type(extra_args))
             self.logger.warning(msg)
             raise HDCException(msg)
 
-        shell_extra_args = ['shell'] + [ quote(arg) for arg in extra_args ]
+        shell_extra_args = ['shell'] + [arg for arg in extra_args ]
 
         try:
             return self.run_cmd(shell_extra_args)
@@ -292,7 +291,7 @@ class HDC(Adapter):
             encoded = str(text)
         # TODO find out which characters can be dangerous, and handle non-English characters
         # self.shell("input text %s" % encoded)
-        self.shell("uitest uiInput inputText %d %d %s" %(x,y,text))
+        self.shell("uitest uiInput inputText %d %d '%s'" %(x,y,text))
 
     """
     The following function is especially for HarmonyOS NEXT
