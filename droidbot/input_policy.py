@@ -1133,7 +1133,7 @@ class TaskPolicy(UtgBasedInputPolicy):
 
         if isinstance(selected_action, SetTextEvent):
             if input_text != "N/A" and input_text != None:
-                selected_action.text = input_text.replace('"', '').replace(' ', '-')
+                selected_action.text = input_text.replace('"', '')# .replace(' ', '-')
                 if len(selected_action.text) > 30:  # heuristically disable long text input
                     selected_action.text = ''
             else:
