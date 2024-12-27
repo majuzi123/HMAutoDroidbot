@@ -9,16 +9,19 @@ system: harmonyOS
 # app_path: target .hap file
 # count: <number of events to input>
 
-#device: 127.0.0.1:5555
-device: 33Z0224620051970
+device: 127.0.0.1:5555
+#device: 33Z0224620051970
 output_dir: output
-#app_path: orangeMall.hap
-#app_path: D:\Mike\PycharmProjects\HMAutoDroidbot\phone-default-signed.hap
-app_path: example\wechat.hap
-#count: 100
+app_path: example\orangeMall.hap
+count: 100
+task: "选择最下面的商品，进入详情页，然后点击立即购买，提交订单,并成功支付，都完成后停止app即可"
+keep_app: True
+
+#app_path: E:\AutoDroid\auto\hapList\NetEase-community-default-unsigned.hap
+#task: "从'飙升榜'里随机播放一首歌"
 #task: "随便点击一件商品进入详情页，然后点击立即购买，提交订单,并成功支付，都完成后停止app即可"
 #task: "点击购物车，点击全选按钮选择购物车的所有商品，进行结算，提交订单,并成功支付，都完成后停止app即可"
 #task: "下滑选择最下面的商品，进入详情页，然后点击立即购买，提交订单,并成功支付，都完成后停止app即可"
 #task: "登录后点击‘完成’按钮进入主界面，然后随便打开一个文章并点赞"
-task: "给列表第一个人发微信'hello world 你好 ✌'"
+#task: "给列表第一个人发微信'hello world 你好 ✌'"
 #task: "从'飙升榜'里随机播放一首歌"

@@ -300,8 +300,6 @@ class HDC(Adapter):
             encoded = escaped.replace(" ", "%s")
         else:
             encoded = str(text)
-        # TODO find out which characters can be dangerous, and handle non-English characters
-        # self.shell("input text %s" % encoded)
         from hmdriver2.driver import Driver
         d = Driver()
         d.input_text(text)

@@ -102,21 +102,21 @@ def parse_args():
     # print options
     return options
 
-def main():
+
+def load_ymal_args(opts):
+    """Load the args from the config file `config.yml`.
+
+    The design purpose of config.yml is to ease specifying the args via a config file.
+    Note that the values of the args in config.yml would overwrite those args specified via the command line.
     """
-    the main function
-    it starts a droidbot according to the arguments given in cmd line
-    """   
-    opts = parse_args()
-    
     config_dict = get_yml_config()
     for key, value in config_dict.items():
         if key.lower() == "system" and value:
             opts.is_harmonyos = value.lower() == "harmonyos"
-        elif key.lower() == "app_path" and value:
+        elif key.lower() in ["app_path", "package", "package_name"] and value:
             opts.apk_path = value
         elif key.lower() == "policy" and value:
-            opts.input_policy = value
+            opts.policy = value
         elif key.lower() == "output_dir" and value:
             opts.output_dir = value
         elif key.lower() == "count" and value:
@@ -125,6 +125,21 @@ def main():
             opts.task = value
         elif key.lower() in ["target", "device", "device_serial"] and value:
             opts.device_serial = value
+        elif key.lower() == "keep_app" and value:
+            opts.keep_app = value
+
+    return opts
+
+
+def main():
+    """
+    the main function
+    it starts a droidbot according to the arguments given in cmd line
+    """   
+    opts = parse_args()
+    
+    config_dict = get_yml_config()
+    options = load_ymal_args(opts)
 
     if not hasattr(opts, "apk_path"):
         logger.error("App package not provided")
