@@ -70,6 +70,9 @@ class UTG(object):
         if not old_state or not new_state:
             return
 
+        print(event)
+        if isinstance(event, tuple):
+            event = event[1]
         event_str = event.get_event_str(old_state)
         self.transitions.append((old_state, event, new_state))
 

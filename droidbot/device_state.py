@@ -781,19 +781,24 @@ class DeviceState(object):
             if view_id in removed_view_ids:
                 continue
             # print(view_id)
+
             view = self.views[view_id]
             clickable = self._get_self_ancestors_property(view, 'clickable')
             scrollable = self.__safe_dict_get(view, 'scrollable')
             checkable = self._get_self_ancestors_property(view, 'checkable')
             long_clickable = self._get_self_ancestors_property(view, 'long_clickable')
-            editable = self.__safe_dict_get(view, 'editable')
+            # editable = self.__safe_dict_get(view, 'editable')
+            if self.__safe_dict_get(view, 'class') in ['Search','TextInput','TextArea','TextField','EditText']:
+                editable = 1 #判断搜索框
+            else:
+                editable=0
             actionable = clickable or scrollable or checkable or long_clickable or editable
             checked = self.__safe_dict_get(view, 'checked', default=False)
             selected = self.__safe_dict_get(view, 'selected', default=False)
             content_description = self.__safe_dict_get(view, 'content_description', default='')
             view_text = self.__safe_dict_get(view, 'text', default='')
             view_class = self.__safe_dict_get(view, 'class').split('.')[-1]
-            if not content_description and not view_text and not scrollable:  # actionable?
+            if not content_description and not view_text and not actionable:  # actionable?
                 continue
 
             # text = self._merge_text(view_text, content_description)
@@ -873,7 +878,8 @@ class DeviceState(object):
                 # view_descs.append(scroll_down_frame.replace('@', str(len(view_descs))))#.replace('&', view_class).replace('#', text))
                 # available_actions.append(ScrollEvent(view=view, direction='DOWN'))
             else:
-
+                if not remove_time_and_ip and not content_description and not len(view_text):
+                    continue
                 if remove_time_and_ip:
                     view_text = self._remove_ip_and_date(view_text)
                     content_description = self._remove_ip_and_date(content_description)

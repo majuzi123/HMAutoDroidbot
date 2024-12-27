@@ -283,7 +283,7 @@ class HDC(Adapter):
 
         self.shell("uitest uiInput swipe %d %d %d %d %d" % (x0, y0, x1, y1, duration))
         
-    def type(self, text):
+    def type(self, text, x, y):
         # hdc shell uitest uiInput inputText 100 100 hello
         if isinstance(text, str):
             escaped = text.replace("%s", "\\%s")
@@ -291,7 +291,8 @@ class HDC(Adapter):
         else:
             encoded = str(text)
         # TODO find out which characters can be dangerous, and handle non-English characters
-        self.shell("input text %s" % encoded)
+        # self.shell("input text %s" % encoded)
+        self.shell("uitest uiInput inputText %d %d %s" %(x,y,text))
 
     """
     The following function is especially for HarmonyOS NEXT

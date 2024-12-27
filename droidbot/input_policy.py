@@ -53,7 +53,7 @@ POLICY_MEMORY_GUIDED = "memory_guided"  # implemented in input_policy2
 POLICY_LLM_GUIDED = "llm_guided"  # implemented in input_policy3
 POLICY_TASK = "task"
 FINISHED = "task_completed"
-MAX_SCROLL_NUM = 7
+MAX_SCROLL_NUM = 3
 USE_LMQL = False
 
 def safe_dict_get(view_dict, key, default=None):
@@ -879,7 +879,8 @@ class TaskPolicy(UtgBasedInputPolicy):
                 actions_dict[scrollerid] = []
 
                 prefix_scroll_event = self._scroll_to_top_start(scroller, all_views_for_mark)
-                # print(prefix_scroll_event)
+
+                # print(prefix_scroll_event)滚动视图移动到顶部
 
                 # after scrolling to the top, update the current_state
                 top_state = self.device.get_current_state()

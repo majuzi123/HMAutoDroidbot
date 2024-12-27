@@ -246,6 +246,10 @@ class EventLog(object):
         """
         self.from_state = self.device.get_current_state()
         self.start_profiling()
+        print(type(self.event))  # 查看 event 的类型
+        print(self.event)  # 输出元组的内容
+        if isinstance(self.event, tuple):
+            self.event = self.event[1]
         self.event_str = self.event.get_event_str(self.from_state)
         print("Action: %s" % self.event_str)
         self.device.send_event(self.event)
@@ -739,7 +743,7 @@ class SetTextEvent(UIEvent):
         x, y = UIEvent.get_xy(x=self.x, y=self.y, view=self.view)
         touch_event = TouchEvent(x=x, y=y)
         touch_event.send(device)
-        device.view_set_text(self.text)
+        device.view_set_text(self.text,x,y)
         return True
 
     def get_event_str(self, state):

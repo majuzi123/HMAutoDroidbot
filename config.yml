@@ -11,8 +11,14 @@ system: harmonyOS
 
 device: 127.0.0.1:5555
 output_dir: output
-app_path: D:\Users\John\PycharmProjects\HMDroidbot\orangeMall.hap
+#app_path: D:\Users\John\PycharmProjects\HMDroidbot\orangeMall.hap
+##count: 100
+##task: "随便点击一件商品进入详情页，然后点击立即购买，提交订单,并成功支付，都完成后停止app即可"
+#task: "点击购物车，点击全选按钮选择购物车的所有商品，进行结算，提交订单,并成功支付，都完成后停止app即可"
+##task: "选择最下面的商品，进入详情页，然后点击立即购买，提交订单,并成功支付，都完成后停止app即可"
+
+app_path: E:\AutoDroid\auto\hapList\NetEase-community-default-unsigned.hap
 #count: 100
-#task: "随便点击一件商品进入详情页，然后点击立即购买，提交订单,并成功支付，都完成后停止app即可"
-task: "点击购物车，点击全选按钮选择购物车的所有商品，进行结算，提交订单,并成功支付，都完成后停止app即可"
-#task: "选择最下面的商品，进入详情页，然后点击立即购买，提交订单,并成功支付，都完成后停止app即可"
+
+task: "从'飙升榜'里随机播放一首歌"
+
