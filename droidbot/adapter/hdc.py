@@ -293,6 +293,20 @@ class HDC(Adapter):
         # self.shell("input text %s" % encoded)
         self.shell("uitest uiInput inputText %d %d '%s'" %(x,y,text))
 
+    def type_hmdriver2(self, text, x, y):
+        # hdc shell uitest uiInput inputText 100 100 hello
+        if isinstance(text, str):
+            escaped = text.replace("%s", "\\%s")
+            encoded = escaped.replace(" ", "%s")
+        else:
+            encoded = str(text)
+        # TODO find out which characters can be dangerous, and handle non-English characters
+        # self.shell("input text %s" % encoded)
+        from hmdriver2.driver import Driver
+        d = Driver()
+        d.input_text(text)
+
+
     """
     The following function is especially for HarmonyOS NEXT
     """
