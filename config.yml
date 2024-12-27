@@ -19,4 +19,6 @@ output_dir: output
 
 app_path: E:\AutoDroid\auto\hapList\NetEase-community-default-unsigned.hap
 #count: 100
+
 task: "从'飙升榜'里随机播放一首歌"
+
