@@ -128,7 +128,6 @@ def load_ymal_args(opts):
         elif key.lower() == "keep_app" and value:
             opts.keep_app = value
 
-    return opts
 
 
 def main():
@@ -137,9 +136,7 @@ def main():
     it starts a droidbot according to the arguments given in cmd line
     """   
     opts = parse_args()
-    
-    config_dict = get_yml_config()
-    options = load_ymal_args(opts)
+    load_ymal_args(opts)
 
     if not hasattr(opts, "apk_path"):
         logger.error("App package not provided")
