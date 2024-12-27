@@ -246,6 +246,10 @@ class EventLog(object):
         """
         self.from_state = self.device.get_current_state()
         self.start_profiling()
+        print(type(self.event))  # 查看 event 的类型
+        print(self.event)  # 输出元组的内容
+        if isinstance(self.event, tuple):
+            self.event = self.event[1]
         self.event_str = self.event.get_event_str(self.from_state)
         print("Action: %s" % self.event_str)
         self.device.send_event(self.event)
@@ -683,18 +687,18 @@ class ScrollEvent(UIEvent):
 
         start_x, start_y = x, y
         end_x, end_y = x, y
-        duration = 500
+        duration = 1
 
-        if self.direction == "UP":
+        if self.direction == "up":
             start_y -= height * 2 / 5
             end_y += height * 2 / 5
-        elif self.direction == "DOWN":
+        elif self.direction == "down":
             start_y += height * 2 / 5
             end_y -= height * 2 / 5
-        elif self.direction == "LEFT":
+        elif self.direction == "left":
             start_x -= width * 2 / 5
             end_x += width * 2 / 5
-        elif self.direction == "RIGHT":
+        elif self.direction == "right":
             start_x += width * 2 / 5
             end_x -= width * 2 / 5
 

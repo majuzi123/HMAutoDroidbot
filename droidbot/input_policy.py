@@ -53,7 +53,7 @@ POLICY_MEMORY_GUIDED = "memory_guided"  # implemented in input_policy2
 POLICY_LLM_GUIDED = "llm_guided"  # implemented in input_policy3
 POLICY_TASK = "task"
 FINISHED = "task_completed"
-MAX_SCROLL_NUM = 7
+MAX_SCROLL_NUM = 3
 USE_LMQL = False
 
 def safe_dict_get(view_dict, key, default=None):
@@ -99,7 +99,7 @@ class InputPolicy(object):
                     event = KillAppEvent(app=self.app)
                 else:
                     event = self.generate_event()
-                    print(event)
+                    # print(event)
                 if event == FINISHED:
                     break
                 input_manager.add_event(event)
@@ -768,6 +768,27 @@ class TaskPolicy(UtgBasedInputPolicy):
             prefix_scroll_event.append(ScrollEvent(view=scroller, direction="up"))
         return prefix_scroll_event
 
+    def _scroll_to_top_start(self, scroller, all_views_for_mark, old_state=None):
+        prefix_scroll_event = []
+        if old_state is None:
+            old_state = self.current_state
+        for _ in range(1):  # first scroll up to the top
+            self.device.send_event(ScrollEvent(view=scroller, direction="up"))
+            scrolled_state = self.device.get_current_state()
+            self.utg.add_transition(ScrollEvent(view=scroller, direction="up"), old_state, scrolled_state)
+            old_state = scrolled_state
+            state_prompt, scrolled_candidate_actions, scrolled_views, _ = scrolled_state.get_described_actions()
+            scrolled_new_views = []  # judge whether there is a new view after scrolling
+            for scrolled_view in scrolled_views:
+                if scrolled_view not in all_views_for_mark:
+                    scrolled_new_views.append(scrolled_view)
+                    all_views_for_mark.append(scrolled_view)
+            if len(scrolled_new_views) == 0:
+                break
+
+            prefix_scroll_event.append(ScrollEvent(view=scroller, direction="up"))
+        return prefix_scroll_event
+
     def generate_event_based_on_utg(self):
         """
         generate an event based on current UTG
@@ -836,12 +857,12 @@ class TaskPolicy(UtgBasedInputPolicy):
             self.__num_steps_outside = 0
 
         scrollable_views = current_state.get_scrollable_views()  # self._get_scrollable_views(current_state)
+        print(scrollable_views)
 
         if len(scrollable_views) > 0:
             '''
             if there is at least one scroller in the screen, we scroll each scroller many times until all the screens after scrolling have been recorded, you do not need to read
             '''
-            # print(scrollable_views)
 
             actions_dict = {}
             whole_state_views, whole_state_actions, whole_state_strs = [], [], []
@@ -853,13 +874,17 @@ class TaskPolicy(UtgBasedInputPolicy):
 
             for scrollerid in range(len(scrollable_views)):
                 scroller = scrollable_views[scrollerid]
+                # print(scroller)
                 # prefix_scroll_event = []
                 actions_dict[scrollerid] = []
 
-                prefix_scroll_event = self._scroll_to_top(scroller, all_views_for_mark)
+                prefix_scroll_event = self._scroll_to_top_start(scroller, all_views_for_mark)
+
+                # print(prefix_scroll_event)滚动视图移动到顶部
 
                 # after scrolling to the top, update the current_state
                 top_state = self.device.get_current_state()
+                # print(top_state)
                 state_prompt, top_candidate_actions, top_views, _ = top_state.get_described_actions()
                 all_views_without_id, all_actions = top_views, top_candidate_actions
 
@@ -879,17 +904,18 @@ class TaskPolicy(UtgBasedInputPolicy):
                             all_views_without_id.append(scrolled_view)
                             all_actions.append(prefix_scroll_event + [ScrollEvent(view=scroller, direction="down"),
                                                                       scrolled_candidate_actions[scrolled_view_id]])
-                    # print('found new views:', scrolled_new_views)
+                    print('found new views:', scrolled_new_views)
                     if len(scrolled_new_views) == 0:
                         break
 
                     prefix_scroll_event.append(ScrollEvent(view=scroller, direction="down"))
-
+                    # print(prefix_scroll_event)
                     if len(scrolled_new_views) < 2:
                         too_few_item_time += 1
                     if too_few_item_time >= 2:
                         break
 
+                    # print(top_state, scrolled_state)
                     self.utg.add_transition(ScrollEvent(view=scroller, direction="down"), top_state, scrolled_state)
                     top_state = scrolled_state
 
@@ -902,7 +928,7 @@ class TaskPolicy(UtgBasedInputPolicy):
 
                 all_views_for_mark = []
                 _ = self._scroll_to_top(scroller, all_views_for_mark, top_state)
-            # print(whole_state_views)
+                print(whole_state_views)
             action, candidate_actions, target_view, thought = self._get_action_from_views_actions(
                 views=whole_state_views, candidate_actions=whole_state_actions, state_strs=whole_state_strs,
                 action_history=self.__action_history, thought_history=self.__thought_history)
