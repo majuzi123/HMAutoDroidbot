@@ -770,23 +770,23 @@ class TaskPolicy(UtgBasedInputPolicy):
 
     def _scroll_to_top_start(self, scroller, all_views_for_mark, old_state=None):
         prefix_scroll_event = []
-        if old_state is None:
-            old_state = self.current_state
-        for _ in range(1):  # first scroll up to the top
-            self.device.send_event(ScrollEvent(view=scroller, direction="up"))
-            scrolled_state = self.device.get_current_state()
-            self.utg.add_transition(ScrollEvent(view=scroller, direction="up"), old_state, scrolled_state)
-            old_state = scrolled_state
-            state_prompt, scrolled_candidate_actions, scrolled_views, _ = scrolled_state.get_described_actions()
-            scrolled_new_views = []  # judge whether there is a new view after scrolling
-            for scrolled_view in scrolled_views:
-                if scrolled_view not in all_views_for_mark:
-                    scrolled_new_views.append(scrolled_view)
-                    all_views_for_mark.append(scrolled_view)
-            if len(scrolled_new_views) == 0:
-                break
-
-            prefix_scroll_event.append(ScrollEvent(view=scroller, direction="up"))
+        # if old_state is None:
+        #     old_state = self.current_state
+        # for _ in range(1):  # first scroll up to the top
+        #     self.device.send_event(ScrollEvent(view=scroller, direction="up"))
+        #     scrolled_state = self.device.get_current_state()
+        #     self.utg.add_transition(ScrollEvent(view=scroller, direction="up"), old_state, scrolled_state)
+        #     old_state = scrolled_state
+        #     state_prompt, scrolled_candidate_actions, scrolled_views, _ = scrolled_state.get_described_actions()
+        #     scrolled_new_views = []  # judge whether there is a new view after scrolling
+        #     for scrolled_view in scrolled_views:
+        #         if scrolled_view not in all_views_for_mark:
+        #             scrolled_new_views.append(scrolled_view)
+        #             all_views_for_mark.append(scrolled_view)
+        #     if len(scrolled_new_views) == 0:
+        #         break
+        #
+        #     prefix_scroll_event.append(ScrollEvent(view=scroller, direction="up"))
         return prefix_scroll_event
 
     def generate_event_based_on_utg(self):
