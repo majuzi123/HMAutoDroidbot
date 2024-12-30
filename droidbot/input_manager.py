@@ -31,7 +31,7 @@ class InputManager(object):
     """
 
     def __init__(self, device, app, task, policy_name, random_input,
-                 event_count, event_interval,
+                 event_count, event_interval, is_scroll,
                  script_path=None, profiling_method=None, master=None,
                  replay_output=None):
         """
@@ -55,6 +55,7 @@ class InputManager(object):
         self.event_count = event_count
         self.event_interval = event_interval
         self.replay_output = replay_output
+        self.is_scroll = is_scroll
 
         self.monkey = None
 
@@ -87,7 +88,7 @@ class InputManager(object):
         elif self.policy_name == POLICY_MANUAL:
             input_policy = ManualPolicy(device, app)
         elif self.policy_name == POLICY_TASK:
-            input_policy = TaskPolicy(device, app, self.random_input, task=self.task)
+            input_policy = TaskPolicy(device, app, self.random_input, task=self.task, is_scroll= self.is_scroll)
         else:
             self.logger.warning("No valid input policy specified. Using policy \"none\".")
             input_policy = None

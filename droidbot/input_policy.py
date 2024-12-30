@@ -676,7 +676,7 @@ class ManualPolicy(UtgBasedInputPolicy):
 
 class TaskPolicy(UtgBasedInputPolicy):
 
-    def __init__(self, device, app, random_input, task, use_memory=False, debug_mode=False):
+    def __init__(self, device, app, random_input, task, use_memory=False, is_scroll=False, debug_mode=False):
         super(TaskPolicy, self).__init__(device, app, random_input)
         self.logger = logging.getLogger(self.__class__.__name__)
         self.task = task
@@ -691,6 +691,7 @@ class TaskPolicy(UtgBasedInputPolicy):
         self.__action_history = []
         self.__thought_history = []
         self.use_memory = use_memory
+        self.is_scroll = is_scroll
         # if use_memory:
         #     self.memory = Memory(app_name=self.app.app_name, app_output_path=self.device.output_dir)
         if self.use_memory:
@@ -859,7 +860,7 @@ class TaskPolicy(UtgBasedInputPolicy):
         scrollable_views = current_state.get_scrollable_views()  # self._get_scrollable_views(current_state)
         print(scrollable_views)
 
-        if len(scrollable_views) > 0:
+        if len(scrollable_views) > 0 and self.is_scroll:
             '''
             if there is at least one scroller in the screen, we scroll each scroller many times until all the screens after scrolling have been recorded, you do not need to read
             '''

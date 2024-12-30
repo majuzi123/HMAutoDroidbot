@@ -98,6 +98,8 @@ def parse_args():
                         help="Save the device log while testing. Can be found in the report directory (Logcat in Android and Hilog in HarmonyOS")
     parser.add_argument("-is_harmonyos", action="store_true", dest="is_harmonyos",
                         help="Runing droidbot on harmonyOS")
+    parser.add_argument("-is_scroll", action="store_true", dest="is_scroll", default= False,
+                        help="Scroll down on harmonyOS")
     options = parser.parse_args()
     # print options
     return options
@@ -127,6 +129,8 @@ def load_ymal_args(opts):
             opts.device_serial = value
         elif key.lower() == "keep_app" and value:
             opts.keep_app = value
+        elif key.lower() == "is_scroll" and value:
+            opts.is_scroll = value
 
 
 
@@ -210,7 +214,8 @@ def main():
             ignore_ad=opts.ignore_ad,
             replay_output=opts.replay_output,
             is_harmonyos=opts.is_harmonyos,
-            save_log=opts.save_log)
+            save_log=opts.save_log,
+            is_scroll = opts.is_scroll)
         droidbot.start()
     return
 
