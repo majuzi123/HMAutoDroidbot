@@ -1071,7 +1071,8 @@ class TaskPolicy(UtgBasedInputPolicy):
         history_prompt = 'Previous UI actions: \n' + '\n'.join(history_with_thought)
         full_state_prompt = 'Current UI state: \n' + state_prompt
         request_prompt = "\nYour answer should always use the following format: { \"Steps\": \"...<steps usually involved to complete the above task on a smartphone>\", \"Analyses\": \"...<Analyses of the relations between the task, and relations between the previous UI actions and current UI state>\", \"Finished\": \"Yes/No\", \"Next step\": \"None or a <high level description of the next step>\", \"id\": \"an integer or -1 (if the task has been completed by previous UI actions)\", \"action\": \"tap or input\", \"input_text\": \"N/A or ...<input text>\" } \n\n**Note that the id is the id number of the UI element to interact with. If you think the task has been completed by previous UI actions, the id should be -1. If 'Finished' is 'Yes', then the 'description' of 'Next step' is 'None', otherwise it is a high level description of the next step. If the 'action' is 'tap', the 'input_text' is N/A, otherwise it is the '<input text>'. Please do not output any content other than the JSON format. **"
-        prompt = introduction + '\n' + task_prompt + '\n' + history_prompt + '\n' + full_state_prompt + '\n' + request_prompt
+        warning_prompt = "If you repeatedly select the same action, but the current UI state does not change, then you should try other actions instead of getting stuck in the same place."
+        prompt = introduction + '\n' + task_prompt + '\n' + history_prompt + '\n' + full_state_prompt + '\n' + request_prompt + '\n' + warning_prompt
         return prompt
 
     def _extract_input_text(self, string, start='Text: ', end=' Thought'):
