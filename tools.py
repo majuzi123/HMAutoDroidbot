@@ -76,39 +76,58 @@ def get_view_without_id(view_desc):
 #     return res
 
 def query_gpt(prompt):
-    # # print(prompt)
+    # print(prompt)
     client = OpenAI(
-        api_key="sk-wAdbDvY3957qtwtGv0gas9yv6yCTLo8jMBkhyIg4bVIlPjxt",
-        base_url="https://api.moonshot.cn/v1",
+                api_key="sk-n5IAnIyihn8yFsV7n7qATmy1pInCPDb60BRIu3UX5Eao84d1-ca",
+                base_url="https://api.chatanywhere.tech",
     )
-    # retry = 0
-    # delay = 10
-    # # 在发送请求之前等待指定的秒数
-    # time.sleep(delay)
-    # completion = client.chat.completions.create(
-    #     model="moonshot-v1-8k",
-    #     messages=[
-    #         {
-    #             "role": "user",
-    #             "content": prompt,
-    #         }
-    #     ],
-    #     temperature = 0.3,
-    # )
-    # res = completion.choices[0].message.content
-    # return res
-    response = send_request_with_retry(
-        client,
-        "moonshot-v1-8k",
-        [
-                    {
-                        "role": "user",
-                        "content": prompt,
-                    }
-                ],
-        0.3,
+    retry = 0
+    completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+        model="gpt-4o-mini",
+        timeout=15
     )
-    return response
+    res = completion.choices[0].message.content
+    return res
+# def query_gpt(prompt):
+#     # # print(prompt)
+#     client = OpenAI(
+#         api_key="sk-wAdbDvY3957qtwtGv0gas9yv6yCTLo8jMBkhyIg4bVIlPjxt",
+#         base_url="https://api.moonshot.cn/v1",
+#     )
+#     # retry = 0
+#     # delay = 10
+#     # # 在发送请求之前等待指定的秒数
+#     # time.sleep(delay)
+#     # completion = client.chat.completions.create(
+#     #     model="moonshot-v1-8k",
+#     #     messages=[
+#     #         {
+#     #             "role": "user",
+#     #             "content": prompt,
+#     #         }
+#     #     ],
+#     #     temperature = 0.3,
+#     # )
+#     # res = completion.choices[0].message.content
+#     # return res
+#     response = send_request_with_retry(
+#         client,
+#         "moonshot-v1-8k",
+#         [
+#                     {
+#                         "role": "user",
+#                         "content": prompt,
+#                     }
+#                 ],
+#         0.3,
+#     )
+#     return response
 
 
 def send_request_with_retry(client, model, messages, temperature, max_retries=3, delay=60):
