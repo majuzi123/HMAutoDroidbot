@@ -1,5 +1,5 @@
 # env: the system of your PC (e.g. windows, macOS, Linux)
-env: Linux
+env: windows
 
 # system: the target harmonyOS
 system: harmonyOS
@@ -8,3 +8,21 @@ system: harmonyOS
 # output_dir: <output path>
 # app_path: target .hap file
 # count: <number of events to input>
+
+#device: 127.0.0.1:5555
+device: 33Z0224620051970
+output_dir: output
+
+app_path: example\music.hap
+#app_path: example\orangeMall.hap
+#app_path: example\wechat.hap
+count: 100
+#task: "随便点击一件商品进入详情页，然后点击立即购买，提交订单,并成功支付，都完成后停止app即可"
+#task: "点击购物车，点击全选按钮选择购物车的所有商品，进行结算，提交订单,并成功支付，都完成后停止app即可"
+#task: "进入首页后在通信录中找到联系人‘宋浩杰’，并给宋浩杰发送消息'hello world 你好 ✌'"
+#task: "从'飙升榜'里随机播放一首歌"
+task: "进入搜索，点击'搜索音乐、歌手、专辑、歌单'，输入'Justin Bieber'，收藏第一个歌单"
+keep_app: True
+is_scroll: False
+
+

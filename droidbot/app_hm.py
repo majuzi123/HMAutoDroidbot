@@ -34,6 +34,7 @@ class AppHM(object):
                 os.makedirs(output_dir)
 
         self.parse_hap()
+        self.app_name = self.get_app_name()
     
     def __str__(self) -> str:
         app_info = ", ".join([
@@ -155,6 +156,18 @@ class AppHM(object):
             sha1.update(data)
             sha256.update(data)
         return [md5.hexdigest(), sha1.hexdigest(), sha256.hexdigest()]
+
+    def get_app_name(self):
+        # 使用os.path.basename获取文件名
+        file_name = os.path.basename(self.app_path)
+
+        # 将文件名分割成单词列表
+        words = file_name.split('.')
+
+        # 提取最后一个单词（不包括扩展名）
+        app_name = words[0].split('M')[-1]
+
+        return app_name
 
 if __name__ == "__main__":
     import argparse

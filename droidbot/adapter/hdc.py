@@ -8,6 +8,7 @@ import os
 import pathlib
 import typing
 import time
+import shlex
 from ..utils import get_yml_config
 try:
     from shlex import quote # Python 3
@@ -127,16 +128,14 @@ class HDC(Adapter):
         @return: output of hdc shell command
         """
 
-        
-
         if isinstance(extra_args, str):
-            extra_args = extra_args.split()
+            extra_args = shlex.split(extra_args)
         if not isinstance(extra_args, list):
             msg = "invalid arguments: %s\nshould be list or str, %s given" % (extra_args, type(extra_args))
             self.logger.warning(msg)
             raise HDCException(msg)
 
-        shell_extra_args = ['shell'] + [ quote(arg) for arg in extra_args ]
+        shell_extra_args = ['shell'] + [arg for arg in extra_args ]
 
         try:
             return self.run_cmd(shell_extra_args)
@@ -283,7 +282,7 @@ class HDC(Adapter):
 
         self.shell("uitest uiInput swipe %d %d %d %d %d" % (x0, y0, x1, y1, duration))
         
-    def type(self, text):
+    def type(self, text, x, y):
         # hdc shell uitest uiInput inputText 100 100 hello
         if isinstance(text, str):
             escaped = text.replace("%s", "\\%s")
@@ -291,7 +290,20 @@ class HDC(Adapter):
         else:
             encoded = str(text)
         # TODO find out which characters can be dangerous, and handle non-English characters
-        self.shell("input text %s" % encoded)
+        # self.shell("input text %s" % encoded)
+        self.shell("uitest uiInput inputText %d %d '%s'" %(x,y,text))
+
+    def type_hmdriver2(self, text, x, y):
+        # hdc shell uitest uiInput inputText 100 100 hello
+        if isinstance(text, str):
+            escaped = text.replace("%s", "\\%s")
+            encoded = escaped.replace(" ", "%s")
+        else:
+            encoded = str(text)
+        from hmdriver2.driver import Driver
+        d = Driver()
+        d.input_text(text)
+
 
     """
     The following function is especially for HarmonyOS NEXT
@@ -335,12 +347,12 @@ class HDC(Adapter):
     def get_views(self, output_dir):
 
         #* Use hidumper to get views
-        dumper = HiDumper(hdc=self)
-        views = dumper.hierachy
+        # dumper = HiDumper(hdc=self)
+        # views = dumper.hierachy
 
         #* use uitest dumper to get views
-        # dumper = UitestDumper(hdc=self, output_dir=output_dir)
-        # views = dumper.get_views()
+        dumper = UitestDumper(hdc=self, output_dir=output_dir)
+        views = dumper.get_views()
 
         return views
 

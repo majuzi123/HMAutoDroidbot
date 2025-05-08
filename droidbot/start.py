@@ -16,7 +16,7 @@ def parse_args():
     parse command line input
     generate options including host name, port number
     """
-    parser = argparse.ArgumentParser(description="Start DroidBot to test an Android app.",
+    parser = argparse.ArgumentParser(description="Start DroidBot to test an Harmony app.",
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-d","-t", action="store", dest="device_serial", required=False,
                         help="The serial number of target device (use `adb devices` to find Android device and `hdc list targets` to find HarmonyOS device)")
@@ -24,6 +24,8 @@ def parse_args():
                         help="The file path to target APK")
     parser.add_argument("-o", action="store", dest="output_dir",
                         help="directory of output")
+    parser.add_argument("-task", action="store", dest="task", default="mingle around",
+                        help="the task to execute, in natural language")
     # parser.add_argument("-env", action="store", dest="env_policy",
     #                     help="policy to set up environment. Supported policies:\n"
     #                          "none\tno environment will be set. App will run in default environment of device; \n"
@@ -96,9 +98,41 @@ def parse_args():
                         help="Save the device log while testing. Can be found in the report directory (Logcat in Android and Hilog in HarmonyOS")
     parser.add_argument("-is_harmonyos", action="store_true", dest="is_harmonyos",
                         help="Runing droidbot on harmonyOS")
+    parser.add_argument("-is_scroll", action="store_true", dest="is_scroll", default= False,
+                        help="Scroll down on harmonyOS")
     options = parser.parse_args()
     # print options
     return options
+
+
+def load_ymal_args(opts):
+    """Load the args from the config file `config.yml`.
+
+    The design purpose of config.yml is to ease specifying the args via a config file.
+    Note that the values of the args in config.yml would overwrite those args specified via the command line.
+    """
+    config_dict = get_yml_config()
+    for key, value in config_dict.items():
+        if key.lower() == "system" and value:
+            opts.is_harmonyos = value.lower() == "harmonyos"
+        elif key.lower() in ["app_path", "package", "package_name"] and value:
+            opts.apk_path = value
+        elif key.lower() == "policy" and value:
+            opts.policy = value
+        elif key.lower() == "output_dir" and value:
+            opts.output_dir = value
+        elif key.lower() == "count" and value:
+            opts.count = value
+        elif key.lower() == "task" and value:
+            opts.task = value
+        elif key.lower() in ["target", "device", "device_serial"] and value:
+            opts.device_serial = value
+        elif key.lower() == "keep_app" and value:
+            opts.keep_app = value
+        elif key.lower() == "is_scroll" and value:
+            opts.is_scroll = value
+
+
 
 def main():
     """
@@ -106,21 +140,7 @@ def main():
     it starts a droidbot according to the arguments given in cmd line
     """   
     opts = parse_args()
-    
-    config_dict = get_yml_config()
-    for key, value in config_dict.items():
-        if key.lower() == "system" and value:
-            opts.is_harmonyos = value.lower() == "harmonyos"
-        elif key.lower() == "app_path" and value:
-            opts.apk_path = value
-        elif key.lower() == "policy" and value:
-            opts.input_policy = value
-        elif key.lower() == "output_dir" and value:
-            opts.output_dir = value
-        elif key.lower() == "count" and value:
-            opts.count = value
-        elif key.lower() in ["target", "device", "device_serial"] and value:
-            opts.device_serial = value
+    load_ymal_args(opts)
 
     if not hasattr(opts, "apk_path"):
         logger.error("App package not provided")
@@ -147,7 +167,7 @@ def main():
             output_dir=opts.output_dir,
             # env_policy=opts.env_policy,
             env_policy=env_manager.POLICY_NONE,
-            policy_name=opts.input_policy,
+            policy_name=input_manager.POLICY_TASK,
             random_input=opts.random_input,
             script_path=opts.script_path,
             event_interval=opts.interval,
@@ -173,8 +193,10 @@ def main():
             is_emulator=opts.is_emulator,
             output_dir=opts.output_dir,
             # env_policy=opts.env_policy,
+            task=opts.task,
             env_policy=env_manager.POLICY_NONE,
-            policy_name=opts.input_policy,
+            # policy_name=opts.input_policy,
+            policy_name=input_manager.POLICY_TASK,
             random_input=opts.random_input,
             script_path=opts.script_path,
             event_interval=opts.interval,
@@ -192,7 +214,8 @@ def main():
             ignore_ad=opts.ignore_ad,
             replay_output=opts.replay_output,
             is_harmonyos=opts.is_harmonyos,
-            save_log=opts.save_log)
+            save_log=opts.save_log,
+            is_scroll = opts.is_scroll)
         droidbot.start()
     return
 

@@ -549,8 +549,8 @@ class DeviceHM(Device):
         else:
             self.hdc.type(text)
 
-    def view_set_text(self, text):
-        self.hdc.type(text)
+    def view_set_text(self, text,x,y):
+        self.hdc.type_hmdriver2(text,x,y)
 
     def key_press(self, key_code):
         self.hdc.press(key_code)

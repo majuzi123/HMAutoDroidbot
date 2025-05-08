@@ -15,7 +15,7 @@ def parse_args():
     parse command line input
     generate options including host name, port number
     """
-    parser = argparse.ArgumentParser(description="Start DroidBot to test an Android app.",
+    parser = argparse.ArgumentParser(description="Start DroidBot to test an Harmony app.",
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-d", action="store", dest="device_serial", required=False,
                         help="The serial number of target device (use `adb devices` to find)")
@@ -96,6 +96,10 @@ def parse_args():
     parser.add_argument("-is_harmonyos", action="store_true", dest="is_harmonyos",
                         help="Declare if the target platform is harmonyos")
 
+    #AutoDroid
+    parser.add_argument("-task", action="store", dest="task", default="mingle around",
+                        help="the task to execute, in natural language")
+
     options = parser.parse_args()
     # print options
     return options
@@ -129,7 +133,7 @@ def main():
             output_dir=opts.output_dir,
             # env_policy=opts.env_policy,
             env_policy=env_manager.POLICY_NONE,
-            policy_name=opts.input_policy,
+            policy_name=input_manager.POLICY_TASK,
             random_input=opts.random_input,
             script_path=opts.script_path,
             event_interval=opts.interval,
@@ -146,7 +150,8 @@ def main():
             qemu_no_graphic=opts.qemu_no_graphic,
             humanoid=opts.humanoid,
             ignore_ad=opts.ignore_ad,
-            replay_output=opts.replay_output)
+            replay_output=opts.replay_output,
+            task=opts.task)
         droidmaster.start()
     else:
         droidbot = DroidBot(
@@ -156,7 +161,7 @@ def main():
             output_dir=opts.output_dir,
             # env_policy=opts.env_policy,
             env_policy=env_manager.POLICY_NONE,
-            policy_name=opts.input_policy,
+            policy_name=input_manager.POLICY_TASK,
             random_input=opts.random_input,
             script_path=opts.script_path,
             event_interval=opts.interval,
@@ -173,7 +178,8 @@ def main():
             humanoid=opts.humanoid,
             ignore_ad=opts.ignore_ad,
             replay_output=opts.replay_output,
-            is_harmonyos=opts.is_harmonyos)
+            is_harmonyos=opts.is_harmonyos,
+            task=opts.task)
         droidbot.start()
     return
 
