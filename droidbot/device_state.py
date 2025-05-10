@@ -7,6 +7,8 @@ import networkx as nx
 from .utils import md5, deprecated
 from .input_event import TouchEvent, LongTouchEvent, ScrollEvent, SetTextEvent, KeyEvent, UIEvent
 
+from tools import MoonshotAPI
+
 
 class DeviceState(object):
     """
@@ -756,16 +758,21 @@ class DeviceState(object):
         Get a text description of current state
         """
         enabled_view_ids = []
-        for view_dict in self.views:
+        filtered_components = self.remove_window_scene_branch()
+        for view_dict in filtered_components:
             # exclude navigation bar if exists
-            if self.__safe_dict_get(view_dict, 'visible') and \
-                    self.__safe_dict_get(view_dict, 'resource_id') not in \
-                    ['android:id/navigationBarBackground',
-                     'android:id/statusBarBackground']:
+            if self.__safe_dict_get(view_dict, 'visible'):
                 enabled_view_ids.append(view_dict['temp_id'])
+        # for view_dict in self.views:
+        #     # exclude navigation bar if exists
+        #     if self.__safe_dict_get(view_dict, 'visible') and \
+        #             self.__safe_dict_get(view_dict, 'resource_id') not in \
+        #             ['android:id/navigationBarBackground',
+        #              'android:id/statusBarBackground']:
+        #         enabled_view_ids.append(view_dict['temp_id'])
 
         text_frame = "<p id=@ text='&'>#</p>"
-        btn_frame = "<button id=@ text='&'>#</button>"
+        btn_frame = "<button id=@ text='&' description='*'>#</button>"
         checkbox_frame = "<checkbox id=@ checked=$ text='&'>#</checkbox>"
         input_frame = "<input id=@ text='&'>#</input>"
         scroll_down_frame = "<div id=@ class='scroller'>scroll down</div>"
@@ -783,6 +790,7 @@ class DeviceState(object):
             # print(view_id)
 
             view = self.views[view_id]
+            # self.process_components_with_model(view)
             clickable = self._get_self_ancestors_property(view, 'clickable')
             scrollable = self.__safe_dict_get(view, 'scrollable')
             checkable = self._get_self_ancestors_property(view, 'checkable')
@@ -848,13 +856,21 @@ class DeviceState(object):
                                                                                             important_view_ids)
                     checked = self._get_children_checked(clickable_children_ids)
                     # end of merging buttons
-                if not view_text and not content_description:
-                    continue
+                # if not view_text and not content_description:
+                #     continue
                 view_desc = btn_frame.replace('@', str(len(view_descs))).replace('#', view_text)
                 if content_description:
                     view_desc = view_desc.replace('&', content_description)
                 else:
                     view_desc = view_desc.replace(" text='&'", "")
+                if view_text:
+                    view_desc = view_desc.replace(" description='*'", "")
+                else:
+                    description = self.process_components_with_model(view)
+                    if description:
+                        view_desc = view_desc.replace('*', description)
+                    else:
+                        view_desc = view_desc.replace(" description='*'", "")
                 view_descs.append(view_desc)
 
                 available_actions.append(TouchEvent(view=view))
@@ -905,6 +921,92 @@ class DeviceState(object):
         views_without_id = self._remove_view_ids(view_descs)
         # print(views_without_id)
         return state_desc, available_actions, views_without_id, important_view_ids
+
+    def remove_window_scene_branch(self):
+        """移除 WindowScene 及其直接子节点"""
+        # 找到 WindowScene 组件
+        window_scene = None
+        for comp in self.views:
+            if comp.get("class") == "WindowScene":
+                window_scene = comp
+                break
+
+        if not window_scene:
+            return self.views
+
+        # 移除 WindowScene 及其直接子节点
+        filtered_components = []
+        for comp in self.views:
+            if comp == window_scene or self.is_parent(comp, window_scene):
+                continue
+            filtered_components.append(comp)
+
+        return filtered_components
+
+    def is_parent(self, child, parent):
+        """通过 hierarchy 属性判断 child 是否是 parent 的子组件"""
+        if "hierarchy" not in child or "hierarchy" not in parent:
+            return False
+        # 判断 child 的 hierarchy 是否以 parent 的 hierarchy 开头
+        return child["hierarchy"].startswith(parent["hierarchy"] + ",")
+
+    def process_components_with_model(self, view_dict):
+        """
+        Process components by cutting them based on their bounds and using a model to understand their semantics.
+        """
+        try:
+            if self.device.output_dir is None:
+                return
+            else:
+                output_dir = os.path.join(self.device.output_dir, "views")
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+            view_str = view_dict['view_str']
+            # Crop the wiget image from the screenshot
+            if not self.device.is_harmonyos:
+                # Android
+                if self.device.adapters[self.device.minicap]:
+                    view_file_path = "%s/view_%s.jpg" % (output_dir, view_str)
+                else:
+                    view_file_path = "%s/view_%s.png" % (output_dir, view_str)
+            else:
+                # HarmonyOS
+                view_file_path = "%s/view_%s.jpeg" % (output_dir, view_str)
+            if os.path.exists(view_file_path):
+                return
+            from PIL import Image
+            # Load the original image:
+            view_bound = view_dict['bounds']
+            original_img = Image.open(self.screenshot_path)
+            # view bound should be in original image bound
+            view_img = original_img.crop((min(original_img.width - 1, max(0, view_bound[0][0])),
+                                          min(original_img.height - 1, max(0, view_bound[0][1])),
+                                          min(original_img.width, max(0, view_bound[1][0])),
+                                          min(original_img.height, max(0, view_bound[1][1]))))
+            view_img.convert("RGB").save(view_file_path)
+            MOONSHOT_API_KEY = ""
+
+            # 创建 Moonshot API 客户端实例
+            moonshot_api = MoonshotAPI(api_key=MOONSHOT_API_KEY)
+
+            # 替换为你的组件图像路径
+            component_image_path = view_file_path
+
+            # 解析图像组件的语义
+            description = moonshot_api.parse_component_semantics(component_image_path)
+
+            if description:
+                print(f"Semantic Description: {description}")
+                return description
+            else:
+                return None
+                print("Failed to get semantic description.")
+        except Exception as e:
+            self.device.logger.warning(e)
+
+
+
+
 
     def _get_ancestor_id(self, view, key, default=None):
         if self.__safe_dict_get(view, key=key, default=False):
