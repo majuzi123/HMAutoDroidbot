@@ -403,6 +403,89 @@ def hash_string(string):
     return hashed_string
 
 
-if __name__ == '__main__':
-    print(query_gpt('how can i cancel wechat charge'))
+import os
+import base64
+from openai import OpenAI
+
+class MoonshotAPI:
+    def __init__(self, api_key=None, base_url=None):
+        """
+        初始化 Moonshot API 客户端
+
+        参数:
+            api_key (str, optional): Moonshot API 的密钥。如果未提供，将从环境变量 "MOONSHOT_API_KEY" 中获取。
+            base_url (str, optional): Moonshot API 的基础 URL。如果未提供，将使用默认值 "https://api.moonshot.cn/v1"。
+        """
+        self.api_key = api_key or os.environ.get("MOONSHOT_API_KEY")
+        self.base_url = base_url or "https://api.moonshot.cn/v1"
+        self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+
+    def parse_component_semantics(self, image_path):
+        """
+        使用 Moonshot API 解析组件图像的语义
+
+        参数:
+            image_path (str): 组件图像的路径
+
+        返回:
+            str: 图像的语义描述，如果调用失败则返回 None
+        """
+        try:
+            # 对图像进行 Base64 编码
+            with open(image_path, 'rb') as f:
+                img_base = base64.b64encode(f.read()).decode('utf-8')
+
+            # 调用 Moonshot API 进行语义解析
+            response = self.client.chat.completions.create(
+                model="moonshot-v1-8k-vision-preview",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{img_base}"
+                                }
+                            },
+                            {
+                                "type": "text",
+                                "text": "请用英文描述这个图像组件的语义"
+                            }
+                        ]
+                    }
+                ]
+            )
+
+            # 获取响应中的语义描述
+            semantic_description = response.choices[0].message.content
+            return semantic_description
+
+        except Exception as e:
+            print(f"Error occurred: {e}")
+            return None
+
+# 示例用法
+if __name__ == "__main__":
+    # print(query_gpt('how can i cancel wechat charge'))
+    # 替换为你的 Moonshot API 密钥（或将其设置为环境变量）
+    MOONSHOT_API_KEY = ""
+
+    # 创建 Moonshot API 客户端实例
+    moonshot_api = MoonshotAPI(api_key=MOONSHOT_API_KEY)
+
+    # 替换为你的组件图像路径
+    component_image_path = "D:\Mike\PycharmProjects\HMDroidbot\output\marking\mark_2024-10-16_091356\small_areas.jpg"
+
+    # 解析图像组件的语义
+    description = moonshot_api.parse_component_semantics(component_image_path)
+
+    if description:
+        print(f"Semantic Description: {description}")
+    else:
+        print("Failed to get semantic description.")
+
+
+
+
 
